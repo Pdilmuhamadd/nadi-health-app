@@ -3,10 +3,13 @@ from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, F
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 import datetime
+import os
+load_dotenv()
 
 # 1. KONFIGURASI DATABASE
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:adminpostgresql.019@localhost:5432/nadi_db"
+SQLALCHEMY_DATABASE_URL = "postgresql://postgres:adnpsql.019@localhost:5432/nadi_db"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
