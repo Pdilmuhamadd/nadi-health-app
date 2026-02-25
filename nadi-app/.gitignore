@@ -39,3 +39,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Python (Backend)
+__pycache__/
+*.py[cod]
+.env
+venv/
+.venv/
+
+# Next.js (Frontend)
+nadi-app/node_modules/
+nadi-app/.next/
+nadi-app/.env*.local
+
+# Lain-lain
+.DS_Store
