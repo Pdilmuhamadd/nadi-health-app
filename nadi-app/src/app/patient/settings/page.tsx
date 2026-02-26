@@ -24,7 +24,7 @@ export default function SettingsPage() {
     rpo: ""
   });
 
-  const patientId = "fadhil_01"; // Simulasi session
+  const patientId = "pasien123"; // Simulasi session
 
   // 1. Fetch data awal saat halaman dimuat
   useEffect(() => {

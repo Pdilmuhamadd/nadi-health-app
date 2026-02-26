@@ -127,7 +127,7 @@ export default function LoginPage() {
                   </label>
                   <input 
                     type="text" 
-                    placeholder={role === 'patient' ? "Contoh: fadhil_01" : "Contoh: dr_ahmad"}
+                    placeholder={role === 'patient' ? "Contoh: pasien123" : "Contoh: nama_dokter"}
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
                     required

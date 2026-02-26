@@ -24,8 +24,8 @@ export default function PatientChatPage() {
   // Ref untuk fitur auto-scroll
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const patientId = "fadhil_01";
-  const doctorId = "dr_fadhil"; // Simulasi dokter tujuan
+  const patientId = "patient_123"; // Simulasi ID pasien
+  const doctorId = "nama_dokter"; // Simulasi dokter tujuan
 
   // Fungsi auto-scroll
   const scrollToBottom = () => {

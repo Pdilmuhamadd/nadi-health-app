@@ -26,7 +26,7 @@ export default function DoctorChatPage() {
   // Ref untuk auto-scroll
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  const doctorId = "dr_fadhil"; 
+  const doctorId = "nama_dokter"; 
 
   // Fungsi Auto Scroll
   const scrollToBottom = () => {

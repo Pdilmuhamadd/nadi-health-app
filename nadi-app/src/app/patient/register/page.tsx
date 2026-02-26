@@ -102,7 +102,7 @@ export default function RegisterPatientPage() {
                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">ID Pasien / Username <span className="text-rose-500">*</span></label>
                 <input 
                   type="text" 
-                  placeholder="fadhil_01"
+                  placeholder="Contoh: patient123"
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white transition-all"
                   onChange={(e) => setFormData({...formData, patient_id: e.target.value})}
                   required 

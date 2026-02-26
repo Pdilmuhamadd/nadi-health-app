@@ -29,7 +29,7 @@ export default function PatientDashboard() {
     mood_journal: ""
   });
 
-  const patientId = "fadhil_01"; 
+  const patientId = "pasien123"; 
 
   // 1. FETCH DATA DARI RAILWAY
   useEffect(() => {
