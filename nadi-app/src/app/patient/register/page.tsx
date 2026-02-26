@@ -3,7 +3,11 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { User, MapPin, Calendar, Activity, ClipboardList, ArrowRight, CheckCircle2 } from "lucide-react";
+import { 
+  User, MapPin, Calendar, Activity, 
+  ClipboardList, ArrowRight, CheckCircle2, 
+  ArrowLeft, Loader2 
+} from "lucide-react";
 
 export default function RegisterPatientPage() {
   const router = useRouter();
@@ -28,64 +32,88 @@ export default function RegisterPatientPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          age: parseInt(formData.age)
+          age: parseInt(formData.age) || 0 // Mencegah NaN terkirim ke DB
         }),
       });
 
       if (res.ok) {
-        // Efek sukses sebelum pindah halaman
-        alert("Pendaftaran Pasien Berhasil!");
+        alert("Pendaftaran Pasien Berhasil! Silakan masuk dengan ID Anda.");
         router.push("/login");
       } else {
         const errData = await res.json();
-        alert(`Gagal: ${errData.detail || "Terjadi kesalahan"}`);
+        alert(`Gagal mendaftar: ${errData.detail || "Terjadi kesalahan di server"}`);
       }
     } catch (err) {
-      alert("Terjadi kesalahan koneksi ke server Railway.");
+      alert("Koneksi ke server Railway terputus. Pastikan backend aktif.");
     } finally {
       setLoading(false);
     }
   };
 
+  // Variasi Animasi Framer Motion
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.15 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-4 md:px-6 font-sans">
+      
+      {/* Tombol Back */}
+      <div className="max-w-2xl mx-auto mb-6">
+        <button 
+          onClick={() => router.back()} 
+          className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-teal-600 transition-colors"
+        >
+          <ArrowLeft size={16} /> Kembali
+        </button>
+      </div>
+
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial="hidden" animate="show" variants={containerVariants}
         className="max-w-2xl mx-auto"
       >
-        <div className="text-center mb-10">
+        <motion.div variants={itemVariants} className="text-center mb-10">
           <h1 className="text-4xl font-black dark:text-white tracking-tighter italic">
             PENDAFTARAN <span className="text-teal-600">PASIEN</span>
           </h1>
-          <p className="text-slate-500 mt-2 font-medium">Lengkapi rekam medis awal Anda untuk sistem NADI.</p>
-        </div>
+          <p className="text-slate-500 mt-2 font-medium text-sm">Lengkapi rekam medis awal Anda untuk terhubung dengan NADI.</p>
+        </motion.div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          
           {/* Section 1: Data Diri */}
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-xl border border-slate-100 dark:border-slate-800 space-y-4">
-            <div className="flex items-center gap-2 mb-2 text-teal-600 font-bold">
+          <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100 dark:border-slate-800 space-y-4">
+            <div className="flex items-center gap-2 mb-4 text-teal-600 font-bold border-b border-slate-50 dark:border-slate-800 pb-4">
               <User size={20} />
               <span className="text-sm uppercase tracking-widest">Informasi Pribadi</span>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">ID Pasien / Username</label>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">ID Pasien / Username <span className="text-rose-500">*</span></label>
                 <input 
                   type="text" 
                   placeholder="fadhil_01"
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white transition-all"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white transition-all"
                   onChange={(e) => setFormData({...formData, patient_id: e.target.value})}
                   required 
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Nama Lengkap</label>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Nama Lengkap <span className="text-rose-500">*</span></label>
                 <input 
                   type="text" 
-                  placeholder="Fadhil Muhamad Pratama"
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white transition-all"
+                  placeholder="Nama sesuai KTP"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white transition-all"
                   onChange={(e) => setFormData({...formData, full_name: e.target.value})}
                   required 
                 />
@@ -93,71 +121,82 @@ export default function RegisterPatientPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Usia</label>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Usia <span className="text-rose-500">*</span></label>
                 <input 
                   type="number" 
-                  placeholder="22"
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white transition-all"
+                  placeholder="Angka"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white transition-all"
                   onChange={(e) => setFormData({...formData, age: e.target.value})}
                   required 
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Domisili</label>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Domisili <span className="text-rose-500">*</span></label>
                 <input 
                   type="text" 
                   defaultValue="Serang, Banten"
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white transition-all"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white transition-all"
                   onChange={(e) => setFormData({...formData, domicile: e.target.value})}
                   required 
                 />
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Section 2: Riwayat Medis */}
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-xl border border-slate-100 dark:border-slate-800 space-y-4">
-            <div className="flex items-center gap-2 mb-2 text-rose-500 font-bold">
+          <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100 dark:border-slate-800 space-y-4">
+            <div className="flex items-center gap-2 mb-4 text-rose-500 font-bold border-b border-slate-50 dark:border-slate-800 pb-4">
               <ClipboardList size={20} />
               <span className="text-sm uppercase tracking-widest">Rekam Medis Awal</span>
             </div>
 
             <div className="space-y-4">
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Riwayat Penyakit Dahulu (RPD)</label>
                 <textarea 
-                  placeholder="Contoh: Diabetes Tipe 1 sejak 2024"
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 dark:text-white min-h-[80px]"
+                  placeholder="Contoh: Diabetes Tipe 1 sejak 2024 (Kosongkan jika tidak ada)"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-rose-500 dark:text-white min-h-[80px] resize-none transition-all"
                   onChange={(e) => setFormData({...formData, rpd: e.target.value})}
                 />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Riwayat Penyakit Keluarga (RPK)</label>
                 <textarea 
-                  placeholder="Contoh: Ayah menderita Hipertensi"
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 dark:text-white min-h-[80px]"
+                  placeholder="Contoh: Ayah menderita Hipertensi (Kosongkan jika tidak ada)"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-rose-500 dark:text-white min-h-[80px] resize-none transition-all"
                   onChange={(e) => setFormData({...formData, rpk: e.target.value})}
                 />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Riwayat Penggunaan Obat (RPO)</label>
                 <textarea 
-                  placeholder="Contoh: Metformin 500mg, Insulin Novorapid"
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 dark:text-white min-h-[80px]"
+                  placeholder="Contoh: Metformin 500mg (Kosongkan jika tidak ada)"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-rose-500 dark:text-white min-h-[80px] resize-none transition-all"
                   onChange={(e) => setFormData({...formData, rpo: e.target.value})}
                 />
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <button 
+          {/* Submit Button */}
+          <motion.button 
+            variants={itemVariants}
             disabled={loading}
-            className="w-full bg-teal-600 hover:bg-teal-700 text-white font-black py-5 rounded-[1.5rem] flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl shadow-teal-500/20 text-lg"
+            className="w-full bg-teal-600 hover:bg-teal-700 text-white font-black py-5 rounded-[1.5rem] flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl shadow-teal-500/20 text-lg disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {loading ? "MENDAFTARKAN..." : "KONFIRMASI PENDAFTARAN"} 
-            {!loading && <CheckCircle2 size={24} />}
-          </button>
+            {loading ? (
+              <>
+                <Loader2 className="animate-spin" size={24} />
+                MENDAFTARKAN...
+              </>
+            ) : (
+              <>
+                KONFIRMASI PENDAFTARAN
+                <CheckCircle2 size={24} />
+              </>
+            )}
+          </motion.button>
         </form>
       </motion.div>
     </div>
