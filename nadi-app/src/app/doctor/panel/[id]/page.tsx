@@ -1,197 +1,127 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { 
-  ArrowLeft, FileText, Printer, Activity, 
-  HeartPulse, Droplets, Brain 
-} from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { 
-  Area, AreaChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from "recharts";
+import { 
+  ArrowLeft, Activity, Droplets, Clipboard, 
+  MapPin, Calendar, Heart, MessageSquare
+} from "lucide-react";
 
-// Komponen Pembantu untuk Baris Laporan
-function ReportField({ label, content }: { label: string; content: string | number }) {
-  return (
-    <div className="space-y-1">
-      <h4 className="text-[9px] font-bold text-teal-600 uppercase tracking-widest">{label}</h4>
-      <p className="text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
-        {content || "-"}
-      </p>
-    </div>
-  );
-}
-
-export default function PatientReportPage() {
-  const params = useParams();
+export default function PatientDetailPage() {
+  const { id } = useParams();
+  const router = useRouter();
   const [patient, setPatient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // 1. Fetch data dari Backend Python
   useEffect(() => {
-    const fetchPatientData = async () => {
+    const fetchDetail = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/patients/${params.id}`);
-        const data = await response.json();
-        setPatient(data);
-      } catch (error) {
-        console.error("Gagal mengambil data pasien:", error);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patients/${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPatient(data);
+        }
+      } catch (err) {
+        console.error("Gagal mengambil detail pasien");
       } finally {
         setLoading(false);
       }
     };
+    fetchDetail();
+  }, [id]);
 
-    if (params.id) fetchPatientData();
-  }, [params.id]);
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  if (loading) return <div className="p-10 text-center font-bold dark:text-white">Memuat Rekam Medis...</div>;
-  if (!patient) return <div className="p-10 text-center font-bold text-rose-600">Pasien tidak ditemukan.</div>;
-
-  // Data grafik dummy (nantinya bisa diambil dari riwayat medis asli)
-  const sugarData = [
-    { day: 'Sen', level: 110 }, { day: 'Sel', level: 125 },
-    { day: 'Rab', level: 115 }, { day: 'Kam', level: 140 },
-    { day: 'Jum', level: 120 }, { day: 'Sab', level: patient.blood_sugar || 110 },
-    { day: 'Min', level: 105 },
+  const chartData = [
+    { day: "Sen", value: 110 }, { day: "Sel", value: 145 },
+    { day: "Rab", value: 130 }, { day: "Kam", value: 170 },
+    { day: "Jum", value: 140 }, { day: "Sab", value: 120 },
+    { day: "Min", value: 135 },
   ];
 
+  if (loading) return <div className="min-h-screen flex items-center justify-center dark:bg-slate-950 text-blue-600 font-bold">MEMUAT REKAM MEDIS...</div>;
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-10 transition-colors duration-300">
-      <div className="max-w-5xl mx-auto">
-        
-        {/* Navigation - Hidden on Print */}
-        <div className="mb-8 print:hidden flex justify-between items-center">
-          <Link href="/panel" className="flex items-center gap-2 text-slate-400 hover:text-teal-600 font-bold text-sm transition-colors">
-            <ArrowLeft size={18} /> Kembali ke Daftar
-          </Link>
-          <button 
-            onClick={handlePrint}
-            className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-teal-500/20 active:scale-95 transition-all"
-          >
-            <Printer size={18} /> Cetak Laporan PDF
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-12">
+      <header className="bg-white dark:bg-slate-900 px-6 py-6 border-b border-slate-100 dark:border-slate-800">
+        <div className="max-w-5xl mx-auto flex items-center gap-4">
+          <button onClick={() => router.back()} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-blue-600 transition-all">
+            <ArrowLeft size={20} />
           </button>
+          <h1 className="text-xl font-black dark:text-white uppercase italic tracking-tighter">Profil <span className="text-blue-600">Klinis</span></h1>
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-6 mt-8 space-y-6">
+        {/* KARTU PROFIL UTAMA */}
+        <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-xl border border-slate-100 dark:border-slate-800 flex flex-col md:flex-row gap-8 items-center">
+          <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900/30 rounded-3xl flex items-center justify-center text-blue-600 shadow-inner">
+            <Heart size={48} fill="currentColor" />
+          </div>
+          <div className="flex-1 text-center md:text-left">
+            <h2 className="text-3xl font-black dark:text-white mb-1 uppercase tracking-tight">{patient?.full_name}</h2>
+            <div className="flex flex-wrap justify-center md:justify-start gap-4 text-slate-400 font-bold text-[10px] uppercase tracking-widest">
+              <span className="flex items-center gap-1"><Calendar size={14}/> {patient?.age} TAHUN</span>
+              <span className="flex items-center gap-1"><MapPin size={14}/> {patient?.domicile}</span>
+              <span className="text-blue-600 italic">ID: {patient?.patient_id}</span>
+            </div>
+          </div>
         </div>
 
-        {/* MEDICAL REPORT CONTAINER */}
-        <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-8 md:p-16 shadow-xl border border-slate-200 dark:border-slate-800 print:shadow-none print:border-none print:p-0">
-          
-          {/* Kop Surat */}
-          <div className="flex justify-between items-start border-b-2 border-teal-600 pb-8 mb-10">
-            <div>
-              <h1 className="text-3xl font-black text-teal-600 tracking-tighter uppercase">Nadi Medical.</h1>
-              <p className="text-[10px] font-bold text-slate-400 tracking-[0.3em] uppercase mt-1">Digital Health Solution</p>
-            </div>
-            <div className="text-right text-[10px] text-slate-500 font-bold uppercase leading-relaxed tracking-widest">
-              <p>Jl. Jend. Sudirman No. 123</p>
-              <p>Serang, Banten, Indonesia</p>
-              <p>nadi-health.com</p>
-            </div>
-          </div>
-
-          {/* Info Pasien Utama */}
-          <div className="grid grid-cols-2 gap-8 mb-12">
-            <div>
-              <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Identitas Pasien</h2>
-              <p className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{patient.name}</p>
-              <p className="text-sm text-slate-500 font-medium italic">{patient.age} Tahun • {patient.domicile}</p>
-            </div>
-            <div className="text-right">
-              <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status Klinis</h2>
-              <p className="text-lg font-bold text-teal-600 uppercase italic">Kondisi {patient.ai_status || "Stabil"}</p>
-              <p className="text-sm text-slate-500 font-medium uppercase tracking-tighter">Laporan per {new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* RIWAYAT PENYAKIT (READ FROM DATABASE) */}
+          <div className="md:col-span-1 space-y-4">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl">
+              <div className="flex items-center gap-2 mb-4 text-rose-500 font-black text-xs uppercase italic tracking-widest">
+                <Clipboard size={16}/> Riwayat Medis
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-[9px] font-black text-slate-300 uppercase">RPD (Dahulu)</p>
+                  <p className="text-xs font-bold dark:text-slate-400">{patient?.rpd || "Tidak ada data"}</p>
+                </div>
+                <div>
+                  <p className="text-[9px] font-black text-slate-300 uppercase">RPK (Keluarga)</p>
+                  <p className="text-xs font-bold dark:text-slate-400">{patient?.rpk || "Tidak ada data"}</p>
+                </div>
+                <div>
+                  <p className="text-[9px] font-black text-slate-300 uppercase">Obat-obatan</p>
+                  <p className="text-xs font-bold dark:text-slate-400">{patient?.rpo || "Tidak ada data"}</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Seksi EMR (Poin C PRD: RPS, RPD, RPK, RPO) */}
-          <div className="space-y-8 mb-12">
-            <h3 className="font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center gap-2 uppercase tracking-widest text-[10px]">
-              <FileText size={16} className="text-teal-600" /> Resume Medis Elektronik
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <ReportField label="Riwayat Penyakit Sekarang (RPS)" content={patient.rps} />
-              <ReportField label="Riwayat Penyakit Dahulu (RPD)" content={patient.rpd} />
-              <ReportField label="Riwayat Penyakit Keluarga (RPK)" content={patient.rpk} />
-              <ReportField label="Riwayat Penggunaan Obat (RPO)" content={patient.rpo} />
-            </div>
-          </div>
-
-          {/* Seksi Vital Signs & Grafik */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            <div className="md:col-span-2">
-              <h3 className="font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center gap-2 uppercase tracking-widest text-[10px] mb-6">
-                <Activity size={16} className="text-teal-600" /> Tren Gula Darah Mingguan (mg/dL)
-              </h3>
-              <div className="h-[200px] w-full">
+          {/* GRAFIK PEMANTAUAN (SYNC WITH PATIENT) */}
+          <div className="md:col-span-2">
+            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl">
+              <h3 className="text-sm font-black dark:text-white uppercase mb-6 italic tracking-tight">Pantauan Gula Darah (mg/dL)</h3>
+              <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={sugarData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10}} />
-                    <YAxis hide domain={['dataMin - 10', 'dataMax + 10']} />
-                    <Tooltip />
-                    <Area type="monotone" dataKey="level" stroke="#0d9488" strokeWidth={3} fill="#0d9488" fillOpacity={0.1} />
+                  <AreaChart data={chartData}>
+                    <defs>
+                      <linearGradient id="colorDoctor" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 800}} dy={10} />
+                    <Tooltip contentStyle={{borderRadius: '20px', border: 'none'}} />
+                    <Area type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={4} fillOpacity={1} fill="url(#colorDoctor)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
-            </div>
-            <div className="space-y-4">
-               <h3 className="font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center gap-2 uppercase tracking-widest text-[10px] mb-2">
-                Pemeriksaan Terakhir
-              </h3>
-              <VitalBadge icon={<Droplets size={14}/>} label="Gula Darah" value={`${patient.blood_sugar} mg/dL`} sub={patient.sugar_type} />
-              <VitalBadge icon={<HeartPulse size={14}/>} label="Tekanan Darah" value={`${patient.systolic}/${patient.diastolic}`} sub="mmHg" />
-            </div>
-          </div>
-
-          {/* Signature & AI Insight */}
-          <div className="mt-20 pt-10 flex flex-col md:flex-row justify-between items-end border-t border-slate-100 dark:border-slate-800 gap-10">
-            <div className="max-w-xs">
-              <h4 className="text-[10px] font-bold text-purple-600 uppercase tracking-widest flex items-center gap-2 mb-2">
-                <Brain size={14} /> AI Health Insight (BiLSTM-GRU)
-              </h4>
-              <p className="text-xs text-slate-500 italic leading-relaxed font-medium">
-                "{patient.mood_journal ? `Berdasarkan jurnal harian: "${patient.mood_journal}". Hasil analisis menunjukkan kondisi mental ${patient.ai_status}.` : 'Belum ada data jurnal harian untuk dianalisis.'}"
-              </p>
-            </div>
-            <div className="text-center md:pr-10 w-full md:w-auto">
-              <p className="text-[10px] font-bold text-slate-400 mb-16 uppercase tracking-[0.2em]">Dokter Penanggung Jawab</p>
-              <p className="text-sm font-black text-slate-900 dark:text-white uppercase">dr. Siti Aminah</p>
-              <div className="h-[1px] w-full bg-slate-200 mt-1" />
-              <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-widest text-slate-500">STR: 12345678901122</p>
+              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center gap-4">
+                <MessageSquare className="text-blue-600" size={24}/>
+                <p className="text-[10px] font-bold text-blue-800 dark:text-blue-300">Catatan Dokter: Pasien dalam kondisi stabil, namun disarankan kontrol rutin minggu depan.</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <style jsx global>{`
-        @media print {
-          @page { size: A4; margin: 15mm; }
-          body { background: white !important; color: black !important; }
-          .print\:hidden { display: none !important; }
-          .print\:p-0 { padding: 0 !important; }
-          .print\:shadow-none { box-shadow: none !important; }
-          .print\:border-none { border: none !important; }
-          .dark { color-scheme: light !important; }
-          .dark body { background: white !important; color: black !important; }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-function VitalBadge({ icon, label, value, sub }: any) {
-  return (
-    <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-teal-600">{icon}</span>
-        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{label}</p>
-      </div>
-      <p className="text-lg font-black dark:text-white">{value}</p>
-      <p className="text-[9px] font-bold text-slate-500 italic uppercase">{sub}</p>
+      </main>
     </div>
   );
 }

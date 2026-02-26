@@ -1,162 +1,273 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Plus, X, Save, Thermometer, Brain, HeartPulse, Syringe, 
-  Activity, Droplets, Bell, LogOut, FileText, BrainCircuit 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
+} from "recharts";
+import { 
+  Heart, Activity, Droplets, Bell, User, Plus, X, 
+  CheckCircle2, Download, AlertTriangle, MessageCircle 
 } from "lucide-react";
-import Link from "next/link";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 export default function PatientDashboard() {
+  const router = useRouter();
+  const [patientData, setPatientData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  // 1. Siapkan State untuk menampung input
-  const [formData, setFormData] = useState({
-    patient_id: "pasien-01", 
-    blood_sugar: 0,
-    sugar_type: "Puasa",
-    systolic: 120,
-    diastolic: 80,
-    insulin_unit: 0,
+  const [submitting, setSubmitting] = useState(false);
+
+  const [newRecord, setNewRecord] = useState({
+    blood_sugar: "",
+    sugar_type: "Sewaktu",
+    systolic: "",
+    diastolic: "",
     mood_journal: ""
   });
 
-  // 2. Fungsi handleSubmit yang baru
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const patientId = "fadhil_01"; 
+
+  // 1. FETCH DATA PROFILE
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patients/${patientId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPatientData(data);
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data dari Railway");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [patientId]);
+
+  // 2. FUNGSI SOS (EMERGENCY)
+  const handleSOS = async () => {
+    const confirmSOS = confirm("PERINGATAN: Kirim sinyal darurat ke tenaga medis sekarang?");
+    if (!confirmSOS) return;
+
     try {
-      const response = await fetch("http://localhost:8000/api/records", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/emergency`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ patient_id: patientId }),
       });
-
-      const result = await response.json();
-      
-      if (result.status === "success") {
-        alert(`Berhasil! Analisis Mood: ${result.ai_insight}`);
-        setIsModalOpen(false);
+      if (res.ok) {
+        alert("Sinyal SOS terkirim! Tenaga medis segera menghubungi Anda.");
       }
-    } catch (error) {
-      console.error("Gagal terhubung ke Backend Python:", error);
-      alert("Pastikan main.py sudah dijalankan!");
+    } catch (err) {
+      alert("Gagal terhubung. Segera telepon nomor darurat!");
     }
   };
 
+  // 3. FUNGSI DOWNLOAD PDF
+  const downloadPDF = async () => {
+    const element = document.getElementById("report-area");
+    if (!element) return;
+
+    const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    
+    pdf.setFontSize(18);
+    pdf.setTextColor(13, 148, 136);
+    pdf.text("LAPORAN KESEHATAN NADI", 10, 20);
+    pdf.setFontSize(10);
+    pdf.setTextColor(100);
+    pdf.text(`Pasien: ${patientData?.full_name} | ID: ${patientId}`, 10, 28);
+    
+    const imgWidth = 190;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    pdf.addImage(imgData, "PNG", 10, 35, imgWidth, imgHeight);
+    pdf.save(`NADI_Report_${patientId}.pdf`);
+  };
+
+  // 4. FUNGSI SIMPAN REKAM MEDIS
+  const handleSaveRecord = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/records`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patient_id: patientId,
+          blood_sugar: parseInt(newRecord.blood_sugar),
+          sugar_type: newRecord.sugar_type,
+          systolic: parseInt(newRecord.systolic) || 0,
+          diastolic: parseInt(newRecord.diastolic) || 0,
+          mood_journal: newRecord.mood_journal
+        }),
+      });
+      
+      const result = await res.json();
+      if (res.ok) {
+        alert(`Analisis AI: ${result.alert}`);
+        setIsModalOpen(false);
+        window.location.reload();
+      }
+    } catch (err) {
+      alert("Koneksi server terputus");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const chartData = [
+    { day: "Sen", value: 110 }, { day: "Sel", value: 145 },
+    { day: "Rab", value: 130 }, { day: "Kam", value: 170 },
+    { day: "Jum", value: 140 }, { day: "Sab", value: 120 },
+    { day: "Min", value: 135 },
+  ];
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}>
+        <Activity className="text-teal-600" size={40} />
+      </motion.div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 transition-colors duration-300">
-      {/* Navbar */}
-      <nav className="flex items-center justify-between mb-10 bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center text-white font-black shadow-lg shadow-teal-500/20">N</div>
-          <span className="font-bold dark:text-white uppercase tracking-wider text-sm">NADI Pasien</span>
-        </div>
-        <Link href="/login" className="text-slate-400 hover:text-teal-600 p-2"><LogOut size={20} /></Link>
-      </nav>
-
-      <div className="max-w-7xl mx-auto space-y-10">
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Halo, Fadhil 👋</h1>
-            <p className="text-slate-500 dark:text-slate-400 font-medium">Lengkapi rekam medis harian Anda.</p>
-          </div>
-          <button onClick={() => setIsModalOpen(true)} className="bg-teal-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg shadow-teal-500/20 flex items-center gap-2 hover:bg-teal-700 transition-all active:scale-95">
-            <Plus size={20} /> Input Data Medis
-          </button>
-        </header>
-
-        {/* Vital Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <StatCard title="Gula Darah" value="110" unit="mg/dL" icon={<Droplets className="text-teal-600" />} />
-          <StatCard title="Tekanan Darah" value="120/80" unit="mmHg" icon={<HeartPulse className="text-blue-500" />} />
-          <StatCard title="BMI" value="22.5" unit="Ideal" icon={<Activity className="text-emerald-500" />} />
-          <StatCard title="Mood" value="Stabil" unit="AI" icon={<BrainCircuit className="text-purple-500" />} />
-        </div>
-
-        {/* EMR Summary Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
-            <h3 className="font-bold mb-6 flex items-center gap-2 dark:text-white uppercase text-xs tracking-widest">
-              <FileText size={20} className="text-teal-600" /> Ringkasan EMR
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <EMRBadge label="RPS" content="Gejala lemas sore hari" />
-              <EMRBadge label="RPD" content="Diabetes Tipe 1 (2 Thn)" />
-              <EMRBadge label="RPK" content="Riwayat Ayah Diabetes" />
-              <EMRBadge label="RPO" content="Insulin & Metformin" />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20">
+      {/* HEADER */}
+      <header className="bg-white dark:bg-slate-900 px-6 py-6 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-30">
+        <div className="max-w-5xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-teal-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-teal-500/20">
+              <User size={24} />
+            </div>
+            <div>
+              <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Pasien Terverifikasi</p>
+              <h1 className="text-xl font-black dark:text-white tracking-tight">{patientData?.full_name || "Fadhil Muhamad"}</h1>
             </div>
           </div>
-          <div className="bg-teal-50 dark:bg-teal-900/10 p-8 rounded-[2.5rem] border border-teal-100 dark:border-teal-900/20">
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-teal-600 mb-4 flex items-center gap-2">
-              <Bell size={14} /> Pesan Medis Terakhir
-            </h4>
-            <p className="text-sm text-slate-700 dark:text-slate-300 italic leading-relaxed">
-              "Gula darah puasa sudah baik, pertahankan dosis insulin 2 jam setelah makan malam. Jangan lupa hidrasi saat lari di Serang."
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Modal Input */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[3rem] p-8 md:p-12 shadow-2xl relative my-10">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 text-slate-400 hover:text-teal-600 transition-colors">
-              <X size={28} />
+          <div className="flex gap-2">
+            <button onClick={downloadPDF} className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-[10px] font-black uppercase hover:bg-teal-600 hover:text-white transition-all">
+              <Download size={16} /> Export PDF
             </button>
-            <h2 className="text-3xl font-black mb-8 dark:text-white tracking-tight">Catat Perkembangan</h2>
-            <form className="grid grid-cols-1 md:grid-cols-2 gap-8" onSubmit={(e) => e.preventDefault()}>
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kategori Gula Darah</label>
-                  <select className="w-full bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 rounded-xl px-4 py-3 text-sm dark:text-white outline-none">
-                    <option>Puasa (Bangun Tidur)</option>
-                    <option>2 Jam Setelah Makan</option>
-                    <option>Sewaktu (Sebelum Tidur)</option>
-                  </select>
-                  <input type="number" placeholder="Hasil (mg/dL)" className="w-full bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 rounded-xl px-4 py-3 text-sm dark:text-white" />
-                </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Dosis Insulin (Unit)</label>
-                  <input type="number" placeholder="Contoh: 4" className="w-full bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 rounded-xl px-4 py-3 text-sm dark:text-white" />
-                </div>
-              </div>
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Jurnal Mood & Keluhan</label>
-                  <textarea rows={4} placeholder="Apa yang Anda rasakan hari ini?" className="w-full bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 rounded-xl px-4 py-3 text-sm dark:text-white outline-none resize-none" />
-                </div>
-                <button className="w-full bg-teal-600 hover:bg-teal-700 text-white font-black py-4 rounded-xl shadow-lg shadow-teal-500/20 transition-all active:scale-95">
-                  SIMPAN REKAM MEDIS
-                </button>
-              </div>
-            </form>
+            <button onClick={() => router.push('/patient/chat')} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-teal-600">
+              <MessageCircle size={20} />
+            </button>
           </div>
         </div>
-      )}
-    </div>
-  );
-}
+      </header>
 
-function StatCard({ title, value, unit, icon }: any) {
-  return (
-    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
-      <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-950 flex items-center justify-center mb-4">{icon}</div>
-      <div className="flex items-baseline gap-1">
-        <span className="text-2xl font-black dark:text-white tracking-tight">{value}</span>
-        <span className="text-[10px] font-bold text-slate-400 uppercase">{unit}</span>
-      </div>
-      <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-widest">{title}</p>
-    </div>
-  );
-}
+      <main id="report-area" className="max-w-5xl mx-auto px-6 pt-8 space-y-6">
+        {/* STATS CARDS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <motion.div whileHover={{ y: -5 }} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl">
+            <div className="p-3 w-fit bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-2xl mb-4"><Droplets size={24} /></div>
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Gula Darah</p>
+            <h2 className="text-3xl font-black dark:text-white mt-1">140 <span className="text-sm font-medium text-slate-400">mg/dL</span></h2>
+          </motion.div>
 
-function EMRBadge({ label, content }: any) {
-  return (
-    <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
-      <p className="text-[9px] font-bold text-teal-600 uppercase tracking-widest mb-1">{label}</p>
-      <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{content}</p>
+          <motion.div whileHover={{ y: -5 }} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl">
+            <div className="p-3 w-fit bg-blue-50 dark:bg-blue-900/20 text-blue-500 rounded-2xl mb-4"><Activity size={24} /></div>
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Tekanan Darah</p>
+            <h2 className="text-3xl font-black dark:text-white mt-1">120/80 <span className="text-sm font-medium text-slate-400">mmHg</span></h2>
+          </motion.div>
+
+          <motion.div whileHover={{ y: -5 }} className="bg-teal-600 p-6 rounded-[2rem] text-white shadow-xl">
+            <div className="p-3 w-fit bg-white/20 rounded-2xl mb-4"><CheckCircle2 size={24} /></div>
+            <p className="text-teal-100 text-[10px] font-black uppercase tracking-widest">Analisis AI</p>
+            <h2 className="text-2xl font-black mt-1 italic uppercase tracking-tighter">Kondisi Stabil</h2>
+          </motion.div>
+        </div>
+
+        {/* CHART SECTION */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl">
+          <h3 className="text-lg font-black dark:text-white uppercase tracking-tight italic mb-8">Tren Kesehatan Mingguan</h3>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0d9488" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#0d9488" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 800}} dy={10} />
+                <Tooltip contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px rgba(0,0,0,0.1)'}} />
+                <Area type="monotone" dataKey="value" stroke="#0d9488" strokeWidth={4} fillOpacity={1} fill="url(#colorVal)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      </main>
+
+      {/* EMERGENCY SOS BUTTON */}
+      <motion.button 
+        animate={{ scale: [1, 1.1, 1], boxShadow: ["0 0 0px rgba(225,29,72,0)", "0 0 20px rgba(225,29,72,0.5)", "0 0 0px rgba(225,29,72,0)"] }}
+        transition={{ repeat: Infinity, duration: 1.5 }}
+        onClick={handleSOS}
+        className="fixed bottom-28 right-8 w-16 h-16 bg-rose-600 text-white rounded-[2rem] shadow-2xl flex items-center justify-center z-40 border-4 border-white dark:border-slate-900"
+      >
+        <AlertTriangle size={32} />
+      </motion.button>
+
+      {/* ADD DATA BUTTON */}
+      <motion.button 
+        whileTap={{ scale: 0.9 }}
+        onClick={() => setIsModalOpen(true)}
+        className="fixed bottom-8 right-8 w-16 h-16 bg-teal-600 text-white rounded-[2rem] shadow-2xl flex items-center justify-center z-40"
+      >
+        <Plus size={32} />
+      </motion.button>
+
+      {/* INPUT MODAL */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-md">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 dark:border-slate-800 relative"
+            >
+              <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 text-slate-400 hover:text-rose-500 transition-colors"><X size={24} /></button>
+              <h2 className="text-2xl font-black dark:text-white uppercase italic tracking-tighter mb-6">Update <span className="text-teal-600">Kesehatan</span></h2>
+              <form onSubmit={handleSaveRecord} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Gula Darah</label>
+                    <input type="number" required className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white" onChange={(e) => setNewRecord({...newRecord, blood_sugar: e.target.value})} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Kondisi</label>
+                    <select className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white" onChange={(e) => setNewRecord({...newRecord, sugar_type: e.target.value})}>
+                      <option>Sewaktu</option><option>Puasa</option><option>Setelah Makan</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Tekanan Sistolik</label>
+                    <input type="number" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" onChange={(e) => setNewRecord({...newRecord, systolic: e.target.value})} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Tekanan Diastolik</label>
+                    <input type="number" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" onChange={(e) => setNewRecord({...newRecord, diastolic: e.target.value})} />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Jurnal Harian</label>
+                  <textarea placeholder="Ceritakan perasaanmu hari ini..." className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white min-h-[100px]" onChange={(e) => setNewRecord({...newRecord, mood_journal: e.target.value})} />
+                </div>
+                <button disabled={submitting} className="w-full bg-teal-600 text-white font-black py-5 rounded-[1.5rem] shadow-xl disabled:opacity-50 transition-all active:scale-95">{submitting ? "MENGANALISIS..." : "SIMPAN & ANALISIS AI"}</button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
