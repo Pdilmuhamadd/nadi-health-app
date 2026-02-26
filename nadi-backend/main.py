@@ -4,15 +4,17 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
 import datetime
 import os
 
 # 1. KONFIGURASI DATABASE
 load_dotenv()
+# Mengambil URL database dari environment variable Railway
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+# Cek jika URL tidak ditemukan (biasanya saat lupa set di Railway Variables)
+if not SQLALCHEMY_DATABASE_URL:
+    raise RuntimeError("DATABASE_URL tidak ditemukan di environment variables!")
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -55,11 +57,13 @@ class HealthRecord(Base):
     
     patient = relationship("PatientProfile", back_populates="records")
 
+# Membuat tabel secara otomatis di PostgreSQL Railway saat aplikasi dijalankan
 Base.metadata.create_all(bind=engine)
 
 # 3. FASTAPI SETUP
 app = FastAPI(title="NADI Health Backend")
 
+# CORS diatur agar bisa diakses dari link Vercel kamu
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -81,11 +85,11 @@ def health_check():
 
 @app.get("/api/seed-profile")
 def seed_profile(db: Session = Depends(get_db)):
-    existing = db.query(PatientProfile).filter(PatientProfile.patient_id == "fadhil-01").first()
+    existing = db.query(PatientProfile).filter(PatientProfile.patient_id == "pasien-01").first()
     if not existing:
         new_profile = PatientProfile(
-            patient_id="fadhil-01",
-            full_name="Fadhil Muhamad Pratama",
+            patient_id="pasien-01",
+            full_name="Pasien John",
             age=22,
             domicile="Serang, Banten",
             rpd="Diabetes Tipe 1 sejak 2024",
@@ -100,15 +104,17 @@ def seed_profile(db: Session = Depends(get_db)):
 @app.post("/api/records")
 async def create_record(data: dict, db: Session = Depends(get_db)):
     status_alert = "Normal"
-    if data['blood_sugar'] > 200:
+    blood_sugar = data.get('blood_sugar', 0)
+    
+    if blood_sugar > 200:
         status_alert = "Danger"
-    elif data['blood_sugar'] < 70:
+    elif blood_sugar < 70:
         status_alert = "Warning (Hypoglycemia)"
 
     new_record = HealthRecord(
-        patient_id=data['patient_id'],
-        blood_sugar=data['blood_sugar'],
-        sugar_type=data['sugar_type'],
+        patient_id=data.get('patient_id'),
+        blood_sugar=blood_sugar,
+        sugar_type=data.get('sugar_type'),
         systolic=data.get('systolic'),
         diastolic=data.get('diastolic'),
         insulin_unit=data.get('insulin_unit'),
@@ -128,6 +134,9 @@ def get_all_patients(db: Session = Depends(get_db)):
     results = db.query(PatientProfile).all()
     return results
 
+# 5. RUN SERVER (DINAMIS UNTUK RAILWAY)
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Railway akan memberikan Port secara otomatis, jika tidak ada (lokal) gunakan 8000
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
