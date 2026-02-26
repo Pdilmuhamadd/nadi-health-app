@@ -2,156 +2,178 @@
 
 import React from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion"; // <-- Tambahkan 'Variants' di sini
 import { 
-  Heart, Activity, ShieldCheck, BrainCircuit, 
-  ArrowRight, Stethoscope, Smartphone, FileText 
+  HeartPulse, 
+  ActivitySquare, 
+  ShieldCheck, 
+  Stethoscope, 
+  ArrowRight, 
+  Phone,
+  Clock,
+  ChevronRight
 } from "lucide-react";
 
 export default function LandingPage() {
-  // Variasi animasi untuk efek staggered (muncul berurutan)
-  const containerVariants = {
+  // Tambahkan ': Variants' agar TypeScript tidak protes
+  const fadeUp: Variants = {
+    hidden: { opacity: 0, y: 30 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+  };
+
+  const staggerContainer: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.2
-      }
+      transition: { staggerChildren: 0.15 }
     }
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-  };
-
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300 overflow-x-hidden font-sans">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans selection:bg-teal-500 selection:text-white">
       
-      {/* NAVBAR */}
-      <nav className="flex items-center justify-between px-6 py-6 max-w-7xl mx-auto sticky top-0 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-md z-50">
-        <div className="flex items-center gap-2">
-          <motion.div 
-            whileHover={{ scale: 1.1, rotate: 10 }}
-            className="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-teal-500/20"
-          >
-            <Heart size={24} fill="white" />
-          </motion.div>
-          <span className="text-xl font-black dark:text-white tracking-tighter uppercase italic">
-            Nadi<span className="text-teal-600">.</span>
-          </span>
+      {/* TOP BAR (Kesan Klinis) */}
+      <div className="bg-slate-900 dark:bg-black text-white px-6 py-2 hidden md:block">
+        <div className="max-w-7xl mx-auto flex justify-between items-center text-xs font-medium tracking-wide">
+          <div className="flex items-center gap-4 text-slate-300">
+            <span className="flex items-center gap-1.5"><Clock size={14} className="text-teal-500"/> Layanan AI 24/7 Aktif</span>
+            <span className="flex items-center gap-1.5"><ShieldCheck size={14} className="text-teal-500"/> Data Medis Terenkripsi</span>
+          </div>
+          <div className="flex items-center gap-2 text-slate-300">
+            <Phone size={14} className="text-teal-500" /> Darurat: <span className="font-bold text-white">119</span>
+          </div>
         </div>
-        <div className="flex items-center gap-6">
-          <Link href="/login" className="text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-teal-600 transition-colors">
-            Masuk
-          </Link>
-          <Link href="/patient/register" className="hidden sm:block bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-teal-500/20 active:scale-95">
-            Daftar Akun
-          </Link>
+      </div>
+
+      {/* NAVBAR */}
+      <nav className="border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center text-white shadow-md">
+              <HeartPulse size={24} />
+            </div>
+            <div>
+              <span className="text-2xl font-black tracking-tighter uppercase leading-none block">NADI</span>
+              <span className="text-[9px] font-bold text-teal-600 uppercase tracking-widest leading-none block mt-0.5">Health System</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4 md:gap-8">
+            <Link href="/login" className="text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+              Masuk Portal
+            </Link>
+            <Link href="/patient/register" className="hidden sm:flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-full text-sm font-bold hover:bg-teal-600 dark:hover:bg-teal-500 hover:text-white transition-all">
+              Daftar Pasien <ArrowRight size={16} />
+            </Link>
+          </div>
         </div>
       </nav>
 
       {/* HERO SECTION */}
-      <main className="max-w-7xl mx-auto px-6 pt-12 md:pt-20 pb-20 md:pb-32 flex flex-col md:flex-row items-center gap-12 md:gap-16">
-        
-        {/* Kolom Kiri: Teks & Tombol */}
-        <div className="flex-1 space-y-8 text-center md:text-left z-10">
+      <main className="max-w-7xl mx-auto px-6 pt-16 pb-24 md:pt-24 md:pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          
+          {/* Kiri: Tipografi & CTA */}
           <motion.div 
-            initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-[10px] font-black uppercase tracking-widest"
+            variants={staggerContainer} initial="hidden" animate="show"
+            className="space-y-8"
           >
-            <Activity size={14} className="animate-pulse" /> AI-Powered Health System
-          </motion.div>
-          
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            className="text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.1]"
-          >
-            Digitalisasi <span className="text-teal-600 italic">Rekam Medis</span> & Pemantauan Diabetes.
-          </motion.h1>
-          
-          <motion.p 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-            className="text-lg text-slate-500 dark:text-slate-400 max-w-xl mx-auto md:mx-0 leading-relaxed font-medium"
-          >
-            Sistem terpadu untuk pasien dan tenaga medis. Kelola Gula Darah, Insulin, hingga deteksi kesehatan mental berbasis AI dengan aman.
-          </motion.p>
-          
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-4 pt-4 justify-center md:justify-start"
-          >
-            <Link href="/patient/register" className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-teal-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 group">
-              Daftar Pasien <ArrowRight className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-            {/* Tombol Tenaga Medis diarahkan ke Login agar flow lebih logis */}
-            <Link href="/login" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-2 border-slate-100 dark:border-slate-800 px-8 py-4 rounded-2xl font-black shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 hover:border-blue-500 group">
-              <Stethoscope size={20} className="text-blue-600 group-hover:scale-110 transition-transform" /> Tenaga Medis
-            </Link>
-          </motion.div>
-        </div>
-
-        {/* Kolom Kanan: Grafis / Decoration */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}
-          className="flex-1 w-full relative mt-10 md:mt-0"
-        >
-          <div className="relative w-full aspect-square max-w-md mx-auto md:max-w-none bg-gradient-to-br from-teal-500/10 to-blue-500/10 rounded-[3rem] border border-white/20 dark:border-slate-800/50 backdrop-blur-3xl p-6 md:p-8 overflow-hidden shadow-2xl">
-            {/* Background Glows */}
-            <div className="absolute top-10 right-10 w-32 h-32 bg-teal-500/20 blur-3xl rounded-full animate-pulse" />
-            <div className="absolute bottom-10 left-10 w-32 h-32 bg-blue-500/20 blur-3xl rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
-            
-            {/* Grid Kartu Fitur (Animasi Staggered) */}
-            <motion.div 
-              variants={containerVariants}
-              initial="hidden"
-              animate="show"
-              className="relative z-10 grid grid-cols-2 gap-4 h-full"
-            >
-               <motion.div variants={itemVariants} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm p-6 rounded-[2rem] shadow-xl border border-slate-100/50 dark:border-slate-800/50 flex flex-col justify-center items-center text-center space-y-3 hover:-translate-y-2 transition-transform">
-                  <div className="p-3 bg-teal-50 dark:bg-teal-900/30 rounded-2xl"><BrainCircuit className="text-teal-600" size={32} /></div>
-                  <p className="text-[10px] font-black uppercase tracking-tighter dark:text-white">AI Analysis</p>
-               </motion.div>
-               <motion.div variants={itemVariants} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm p-6 rounded-[2rem] shadow-xl border border-slate-100/50 dark:border-slate-800/50 flex flex-col justify-center items-center text-center space-y-3 mt-8 md:mt-12 hover:-translate-y-2 transition-transform">
-                  <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-2xl"><Smartphone className="text-blue-600" size={32} /></div>
-                  <p className="text-[10px] font-black uppercase tracking-tighter dark:text-white">Mobile Ready</p>
-               </motion.div>
-               <motion.div variants={itemVariants} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm p-6 rounded-[2rem] shadow-xl border border-slate-100/50 dark:border-slate-800/50 flex flex-col justify-center items-center text-center space-y-3 -mt-8 md:-mt-12 hover:-translate-y-2 transition-transform">
-                  <div className="p-3 bg-rose-50 dark:bg-rose-900/30 rounded-2xl"><FileText className="text-rose-600" size={32} /></div>
-                  <p className="text-[10px] font-black uppercase tracking-tighter dark:text-white">PDF Report</p>
-               </motion.div>
-               <motion.div variants={itemVariants} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm p-6 rounded-[2rem] shadow-xl border border-slate-100/50 dark:border-slate-800/50 flex flex-col justify-center items-center text-center space-y-3 hover:-translate-y-2 transition-transform">
-                  <div className="p-3 bg-amber-50 dark:bg-amber-900/30 rounded-2xl"><ShieldCheck className="text-amber-500" size={32} /></div>
-                  <p className="text-[10px] font-black uppercase tracking-tighter dark:text-white">Secure Data</p>
-               </motion.div>
+            <motion.div variants={fadeUp} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-xs font-bold uppercase tracking-widest border border-blue-100 dark:border-blue-800/30">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+              </span>
+              Platform Medis Terpercaya
             </motion.div>
-          </div>
-        </motion.div>
+            
+            <motion.h1 variants={fadeUp} className="text-5xl md:text-6xl lg:text-[5rem] font-black tracking-tighter leading-[1.05] text-slate-900 dark:text-white">
+              Satu Aplikasi,<br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-blue-600">
+                Sejuta Solusi Sehat.
+              </span>
+            </motion.h1>
+            
+            <motion.p variants={fadeUp} className="text-lg md:text-xl text-slate-500 dark:text-slate-400 leading-relaxed max-w-lg font-medium">
+              NADI menghubungkan pasien dengan rekam medis presisi, pemantauan AI real-time, dan akses instan ke tenaga kesehatan.
+            </motion.p>
+            
+            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 pt-4">
+              <Link href="/patient/register" className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-4 rounded-xl font-bold flex items-center justify-between gap-4 transition-all shadow-lg shadow-teal-500/20 group">
+                <span className="text-left">
+                  <span className="block text-xs font-normal text-teal-100 mb-0.5">Untuk Masyarakat</span>
+                  <span className="block text-base">Registrasi Pasien</span>
+                </span>
+                <ChevronRight className="group-hover:translate-x-1 transition-transform" />
+              </Link>
+              
+              <Link href="/login" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-2 border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 px-8 py-4 rounded-xl font-bold flex items-center justify-between gap-4 transition-all group">
+                <span className="text-left">
+                  <span className="block text-xs font-normal text-slate-500 mb-0.5">Untuk Tenaga Medis</span>
+                  <span className="block text-base">Portal Dokter</span>
+                </span>
+                <Stethoscope size={20} className="text-blue-500 group-hover:scale-110 transition-transform" />
+              </Link>
+            </motion.div>
+          </motion.div>
+
+          {/* Kanan: Clinical Dashboard Abstract */}
+          <motion.div 
+            initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7, delay: 0.2 }}
+            className="relative lg:h-[600px] flex items-center justify-center"
+          >
+            {/* Dekorasi Background */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-slate-100 to-slate-50 dark:from-slate-900 dark:to-slate-950 rounded-[3rem] transform rotate-3"></div>
+            
+            <div className="relative w-full max-w-md space-y-6 z-10">
+              {/* Card 1: Vitals */}
+              <motion.div whileHover={{ y: -5 }} className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 flex items-center gap-6">
+                <div className="w-16 h-16 bg-rose-50 dark:bg-rose-900/20 rounded-xl flex items-center justify-center text-rose-500">
+                  <ActivitySquare size={32} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Gula Darah Stabil</p>
+                  <p className="text-3xl font-black text-slate-900 dark:text-white mt-1">112 <span className="text-sm font-medium text-slate-400">mg/dL</span></p>
+                </div>
+              </motion.div>
+              
+              {/* Card 2: AI Status */}
+              <motion.div whileHover={{ y: -5 }} className="bg-teal-600 p-6 rounded-2xl shadow-xl shadow-teal-500/20 text-white flex items-center gap-6 ml-8">
+                <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                  <HeartPulse size={32} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-teal-100 uppercase tracking-widest">Analisis Sistem AI</p>
+                  <p className="text-2xl font-black mt-1">Normal & Terkontrol</p>
+                </div>
+              </motion.div>
+
+              {/* Card 3: Doctor Note */}
+              <motion.div whileHover={{ y: -5 }} className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 font-bold text-xs">DR</div>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">Pesan Dokter Masuk</p>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">"Hasil pantauan grafik mingguan baik. Tetap pertahankan dosis insulin saat ini."</p>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+
+        </div>
       </main>
 
-      {/* FEATURES MINI SECTION */}
-      <section className="bg-white dark:bg-slate-900 py-20 border-t border-slate-100 dark:border-slate-800 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
-          <motion.div whileHover={{ scale: 1.02 }} className="space-y-4 p-6 rounded-3xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-            <h3 className="text-xl font-black dark:text-white italic uppercase tracking-tighter">Monitoring <span className="text-teal-600">Presisi</span></h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">Pantau gula darah dan tekanan darah secara berkala dengan visualisasi grafik yang intuitif.</p>
-          </motion.div>
-          <motion.div whileHover={{ scale: 1.02 }} className="space-y-4 p-6 rounded-3xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-            <h3 className="text-xl font-black dark:text-white italic uppercase tracking-tighter">Analisis <span className="text-blue-600">AI</span></h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">Sistem cerdas yang memberikan peringatan dini jika kondisi kesehatan Anda menunjukkan tanda bahaya.</p>
-          </motion.div>
-          <motion.div whileHover={{ scale: 1.02 }} className="space-y-4 p-6 rounded-3xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-            <h3 className="text-xl font-black dark:text-white italic uppercase tracking-tighter">Layanan <span className="text-rose-600">SOS</span></h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">Satu klik untuk mengirimkan sinyal bantuan kepada tenaga medis saat terjadi kondisi darurat.</p>
-          </motion.div>
-        </div>
-      </section>
-      
       {/* FOOTER */}
-      <footer className="bg-white dark:bg-slate-900 py-8 border-t border-slate-100 dark:border-slate-800 text-center">
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-          &copy; 2026 Nadi Health System
-        </p>
+      <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-8">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            &copy; 2026 Nadi Health System
+          </p>
+          <div className="flex gap-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <Link href="#" className="hover:text-teal-600 transition-colors">Privasi</Link>
+            <Link href="#" className="hover:text-teal-600 transition-colors">Syarat & Ketentuan</Link>
+          </div>
+        </div>
       </footer>
     </div>
   );
