@@ -11,21 +11,37 @@ export default function LoginPage() {
   const [userId, setUserId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fungsi simulasi proses login
-  const handleLogin = (e: React.FormEvent) => {
+  // Fungsi Login & Verifikasi ke Backend
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId.trim()) return;
     
     setIsLoading(true);
     
-    // Simulasi delay koneksi ke database Railway
-    setTimeout(() => {
+    try {
       if (role === "patient") {
-        router.push('/patient/dashboard');
+        // Cek ke database apakah ID Pasien ini terdaftar
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patients/${userId.trim()}`);
+        
+        if (res.ok) {
+          // Jika sukses (ID ditemukan), simpan di memori browser
+          localStorage.setItem("nadi_user_id", userId.trim());
+          router.push('/patient/dashboard');
+        } else {
+          // Jika tidak ditemukan (Status 404)
+          alert("Gagal masuk. ID Pasien tidak ditemukan di sistem.");
+          setIsLoading(false);
+        }
       } else if (role === "doctor") {
+        // Logika untuk dokter bisa ditambahkan di sini ke depannya.
+        // Untuk saat ini, kita anggap dokter langsung masuk untuk testing.
+        localStorage.setItem("nadi_doctor_id", userId.trim());
         router.push('/doctor/panel');
       }
-    }, 1200);
+    } catch (err) {
+      alert("Terjadi kesalahan koneksi ke server. Silakan coba lagi.");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -127,7 +143,7 @@ export default function LoginPage() {
                   </label>
                   <input 
                     type="text" 
-                    placeholder={role === 'patient' ? "Contoh: pasien123" : "Contoh: nama_dokter"}
+                    placeholder={role === 'patient' ? "Contoh: pasien-01" : "Contoh: dr_fadhil"}
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
                     required
