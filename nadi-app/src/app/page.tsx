@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { motion, Variants } from "framer-motion"; // <-- Tambahkan 'Variants' di sini
+import { motion, Variants } from "framer-motion";
 import { 
   HeartPulse, 
   ActivitySquare, 
@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 
 export default function LandingPage() {
-  // Tambahkan ': Variants' agar TypeScript tidak protes
   const fadeUp: Variants = {
     hidden: { opacity: 0, y: 30 },
     show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
@@ -58,7 +57,10 @@ export default function LandingPage() {
             </div>
           </div>
           
-          <div className="flex items-center gap-4 md:gap-8">
+          <div className="flex items-center gap-4 md:gap-6">
+            <Link href="/doctor/register" className="hidden md:block text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-widest">
+              Daftar Dokter
+            </Link>
             <Link href="/login" className="text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
               Masuk Portal
             </Link>
@@ -98,21 +100,31 @@ export default function LandingPage() {
             </motion.p>
             
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Link href="/patient/register" className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-4 rounded-xl font-bold flex items-center justify-between gap-4 transition-all shadow-lg shadow-teal-500/20 group">
-                <span className="text-left">
-                  <span className="block text-xs font-normal text-teal-100 mb-0.5">Untuk Masyarakat</span>
-                  <span className="block text-base">Registrasi Pasien</span>
-                </span>
-                <ChevronRight className="group-hover:translate-x-1 transition-transform" />
-              </Link>
+              {/* Kolom CTA Pasien */}
+              <div className="flex flex-col gap-3">
+                <Link href="/patient/register" className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-4 rounded-xl font-bold flex items-center justify-between gap-4 transition-all shadow-lg shadow-teal-500/20 group h-full">
+                  <span className="text-left">
+                    <span className="block text-xs font-normal text-teal-100 mb-0.5">Untuk Masyarakat</span>
+                    <span className="block text-base">Registrasi Pasien</span>
+                  </span>
+                  <ChevronRight className="group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
               
-              <Link href="/login" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-2 border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 px-8 py-4 rounded-xl font-bold flex items-center justify-between gap-4 transition-all group">
-                <span className="text-left">
-                  <span className="block text-xs font-normal text-slate-500 mb-0.5">Untuk Tenaga Medis</span>
-                  <span className="block text-base">Portal Dokter</span>
-                </span>
-                <Stethoscope size={20} className="text-blue-500 group-hover:scale-110 transition-transform" />
-              </Link>
+              {/* Kolom CTA Dokter */}
+              <div className="flex flex-col gap-3">
+                <Link href="/login" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-2 border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 px-8 py-4 rounded-xl font-bold flex items-center justify-between gap-4 transition-all group">
+                  <span className="text-left">
+                    <span className="block text-xs font-normal text-slate-500 mb-0.5">Untuk Tenaga Medis</span>
+                    <span className="block text-base">Portal Dokter</span>
+                  </span>
+                  <Stethoscope size={20} className="text-blue-500 group-hover:scale-110 transition-transform" />
+                </Link>
+                {/* Link Registrasi Dokter */}
+                <Link href="/doctor/register" className="text-xs text-center font-bold text-slate-400 hover:text-blue-600 transition-colors">
+                  Belum punya akun? <span className="underline">Daftar Dokter</span>
+                </Link>
+              </div>
             </motion.div>
           </motion.div>
 
