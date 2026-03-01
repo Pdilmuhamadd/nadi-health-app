@@ -7,11 +7,11 @@ import {
   HeartPulse, 
   ActivitySquare, 
   ShieldCheck, 
-  Stethoscope, 
   ArrowRight, 
   Phone,
   Clock,
-  ChevronRight
+  UserPlus,
+  Stethoscope
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -29,7 +29,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans selection:bg-teal-500 selection:text-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans selection:bg-teal-500 selection:text-white overflow-hidden">
       
       {/* TOP BAR (Kesan Klinis) */}
       <div className="bg-slate-900 dark:bg-black text-white px-6 py-2 hidden md:block">
@@ -44,9 +44,9 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* NAVBAR */}
+      {/* NAVBAR (Dibersihkan, hanya fokus untuk Login) */}
       <nav className="border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center text-white shadow-md">
               <HeartPulse size={24} />
@@ -57,15 +57,9 @@ export default function LandingPage() {
             </div>
           </div>
           
-          <div className="flex items-center gap-4 md:gap-6">
-            <Link href="/doctor/register" className="hidden md:block text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-widest">
-              Daftar Dokter
-            </Link>
-            <Link href="/login" className="text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
-              Masuk Portal
-            </Link>
-            <Link href="/patient/register" className="hidden sm:flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-full text-sm font-bold hover:bg-teal-600 dark:hover:bg-teal-500 hover:text-white transition-all">
-              Daftar Pasien <ArrowRight size={16} />
+          <div>
+            <Link href="/login" className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white px-6 py-2.5 rounded-full text-sm font-bold transition-all">
+              Masuk Portal <ArrowRight size={16} />
             </Link>
           </div>
         </div>
@@ -75,7 +69,7 @@ export default function LandingPage() {
       <main className="max-w-7xl mx-auto px-6 pt-16 pb-24 md:pt-24 md:pb-32">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           
-          {/* Kiri: Tipografi & CTA */}
+          {/* Kiri: Tipografi & CTA Tunggal yang Jelas */}
           <motion.div 
             variants={staggerContainer} initial="hidden" animate="show"
             className="space-y-8"
@@ -99,32 +93,18 @@ export default function LandingPage() {
               NADI menghubungkan pasien dengan rekam medis presisi, pemantauan AI real-time, dan akses instan ke tenaga kesehatan.
             </motion.p>
             
-            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 pt-4">
-              {/* Kolom CTA Pasien */}
-              <div className="flex flex-col gap-3">
-                <Link href="/patient/register" className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-4 rounded-xl font-bold flex items-center justify-between gap-4 transition-all shadow-lg shadow-teal-500/20 group h-full">
-                  <span className="text-left">
-                    <span className="block text-xs font-normal text-teal-100 mb-0.5">Untuk Masyarakat</span>
-                    <span className="block text-base">Registrasi Pasien</span>
-                  </span>
-                  <ChevronRight className="group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </div>
+            <motion.div variants={fadeUp} className="pt-4 space-y-4">
+              {/* Primary CTA: Daftar Pasien */}
+              <Link href="/patient/register" className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl shadow-teal-500/20 active:scale-95 w-fit group">
+                <UserPlus size={20} />
+                Daftar Sebagai Pasien
+                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform ml-2" />
+              </Link>
               
-              {/* Kolom CTA Dokter */}
-              <div className="flex flex-col gap-3">
-                <Link href="/login" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-2 border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 px-8 py-4 rounded-xl font-bold flex items-center justify-between gap-4 transition-all group">
-                  <span className="text-left">
-                    <span className="block text-xs font-normal text-slate-500 mb-0.5">Untuk Tenaga Medis</span>
-                    <span className="block text-base">Portal Dokter</span>
-                  </span>
-                  <Stethoscope size={20} className="text-blue-500 group-hover:scale-110 transition-transform" />
-                </Link>
-                {/* Link Registrasi Dokter */}
-                <Link href="/doctor/register" className="text-xs text-center font-bold text-slate-400 hover:text-blue-600 transition-colors">
-                  Belum punya akun? <span className="underline">Daftar Dokter</span>
-                </Link>
-              </div>
+              {/* Secondary CTA: Daftar Dokter */}
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 pl-2">
+                Anda seorang tenaga medis? <Link href="/doctor/register" className="text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1 inline-flex"><Stethoscope size={14}/> Bergabung di sini</Link>
+              </p>
             </motion.div>
           </motion.div>
 
