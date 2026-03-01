@@ -37,13 +37,29 @@ export default function PatientDetailPage() {
     fetchDetail();
   }, [id]);
 
-  // Data statis untuk keperluan demo grafik
-  const chartData = [
-    { day: "Sen", value: 110 }, { day: "Sel", value: 145 },
-    { day: "Rab", value: 130 }, { day: "Kam", value: 170 },
-    { day: "Jum", value: 140 }, { day: "Sab", value: 120 },
-    { day: "Min", value: 135 },
-  ];
+  // ==========================================
+  // LOGIKA DATA DINAMIS (PENGGANTI HARDCODE)
+  // ==========================================
+  const records = patient?.records || [];
+  const latestRecord = records.length > 0 ? records[records.length - 1] : null;
+
+  // Format data chart untuk Recharts (Ambil 7 data terakhir)
+  const formatChartData = () => {
+    if (records.length === 0) return [];
+    const days = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+    
+    // Potong maksimal 7 data terakhir
+    const recentRecords = records.slice(-7);
+    
+    return recentRecords.map((r: any) => {
+      const dateObj = new Date(r.created_at);
+      return {
+        day: days[dateObj.getDay()],
+        value: r.blood_sugar
+      };
+    });
+  };
+  const dynamicChartData = formatChartData();
 
   // Variasi animasi
   const containerVariants = {
@@ -151,32 +167,39 @@ export default function PatientDetailPage() {
                   <span className="text-[10px] font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-600 px-3 py-1.5 rounded-lg uppercase tracking-widest">mg/dL</span>
                 </div>
                 
-                <div className="h-[280px] w-full flex-1">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData}>
-                      <defs>
-                        <linearGradient id="colorDoctor" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#2563eb" stopOpacity={0.4}/>
-                          <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" className="dark:opacity-10" />
-                      <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 800}} dy={10} stroke="#94a3b8" />
-                      <Tooltip 
-                        contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)'}} 
-                        cursor={{ stroke: '#94a3b8', strokeWidth: 1, strokeDasharray: '4 4' }}
-                      />
-                      <Area type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={4} fillOpacity={1} fill="url(#colorDoctor)" activeDot={{ r: 6, fill: '#2563eb', stroke: '#fff', strokeWidth: 2 }} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
+                {dynamicChartData.length > 0 ? (
+                  <div className="h-[280px] w-full flex-1">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={dynamicChartData}>
+                        <defs>
+                          <linearGradient id="colorDoctor" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#2563eb" stopOpacity={0.4}/>
+                            <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" className="dark:opacity-10" />
+                        <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 800}} dy={10} stroke="#94a3b8" />
+                        <Tooltip 
+                          contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)'}} 
+                          cursor={{ stroke: '#94a3b8', strokeWidth: 1, strokeDasharray: '4 4' }}
+                        />
+                        <Area type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={4} fillOpacity={1} fill="url(#colorDoctor)" activeDot={{ r: 6, fill: '#2563eb', stroke: '#fff', strokeWidth: 2 }} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[280px] w-full flex flex-col items-center justify-center text-slate-400 space-y-3 bg-slate-50 dark:bg-slate-950/50 rounded-2xl">
+                    <Activity size={48} className="opacity-20" />
+                    <p className="text-sm font-bold uppercase tracking-widest">Belum ada riwayat terekam</p>
+                  </div>
+                )}
                 
                 <div className="mt-8 p-5 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-start gap-4 border border-blue-100 dark:border-blue-800/50">
                   <MessageSquare className="text-blue-600 shrink-0 mt-0.5" size={24}/>
                   <div>
-                    <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">Catatan Analisis Dokter</p>
-                    <p className="text-xs font-bold text-blue-800 dark:text-blue-300 leading-relaxed">
-                      Pasien dalam kondisi relatif stabil. Tren gula darah mingguan menunjukkan fluktuasi normal. Disarankan untuk tetap mengontrol pola makan dan melakukan pengecekan rutin minggu depan.
+                    <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">Catatan Analisis Sistem (AI)</p>
+                    <p className="text-xs font-bold text-blue-800 dark:text-blue-300 leading-relaxed italic">
+                      "{latestRecord?.ai_analysis || "Belum ada catatan atau input rekam medis untuk dianalisis oleh sistem."}"
                     </p>
                   </div>
                 </div>

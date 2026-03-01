@@ -13,6 +13,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [patientId, setPatientId] = useState("");
   
   // State terpusat untuk menyimpan semua data form
   const [formData, setFormData] = useState({
@@ -24,10 +25,20 @@ export default function SettingsPage() {
     rpo: ""
   });
 
-  const patientId = "pasien123"; // Simulasi session
-
-  // 1. Fetch data awal saat halaman dimuat
+  // 1. AMBIL ID DARI MEMORI BROWSER (LOCALSTORAGE)
   useEffect(() => {
+    const storedId = localStorage.getItem("nadi_user_id");
+    if (storedId) {
+      setPatientId(storedId);
+    } else {
+      router.push("/login"); // Tendang ke login kalau gak ada ID
+    }
+  }, [router]);
+
+  // 2. Fetch data awal saat halaman dimuat dan ID sudah didapat
+  useEffect(() => {
+    if (!patientId) return;
+
     const fetchProfile = async () => {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patients/${patientId}`);
@@ -49,18 +60,18 @@ export default function SettingsPage() {
       }
     };
     fetchProfile();
-  }, []);
+  }, [patientId]);
 
-  // 2. Fungsi Simpan (Update Profile)
+  // 3. Fungsi Simpan (Update Profile)
   const handleSave = async () => {
     setSaving(true);
     try {
       // Catatan: Karena di backend main.py saat ini belum ada endpoint PUT/Update, 
-      // kode ini disiapkan untuk masa depan. Untuk sekarang kita simulasikan sukses.
-      // await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patients/${patientId}`, { ... })
+      // kode ini disiapkan untuk masa depan. Untuk sekarang kita simulasikan delay & sukses.
+      // fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patients/${patientId}`, { method: 'PUT', ... })
       
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulasi delay jaringan
-      alert("Perubahan berhasil disimpan!");
+      alert("Perubahan profil dan rekam medis berhasil disimpan (Simulasi)!");
     } catch (error) {
       alert("Gagal menyimpan perubahan.");
     } finally {
@@ -120,11 +131,11 @@ export default function SettingsPage() {
 
             </div>
 
-            {/* ACTION BUTTONS (Ditempatkan di luar card agar selalu terlihat) */}
+            {/* ACTION BUTTONS */}
             <div className="mt-6 flex justify-end">
               <button 
                 onClick={handleSave}
-                disabled={saving}
+                disabled={saving || activeTab === "device"} // Matikan tombol save di tab device
                 className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-4 rounded-[1.5rem] font-black flex items-center gap-3 transition-all active:scale-95 shadow-xl shadow-teal-500/20 disabled:opacity-70 disabled:active:scale-100"
               >
                 {saving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />} 
@@ -249,7 +260,7 @@ function DeviceSection() {
         <button className="w-full sm:w-auto text-[10px] font-black text-[#FC4C02] border-2 border-[#FC4C02]/20 hover:border-[#FC4C02] bg-white dark:bg-slate-900 px-5 py-2.5 rounded-xl transition-all tracking-widest">HUBUNGKAN</button>
       </div>
 
-      {/* Integrasi Google Fit (Contoh tambahan) */}
+      {/* Integrasi Google Fit */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 gap-4 transition-all hover:border-slate-200">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-white rounded-[1rem] flex items-center justify-center border border-slate-100 dark:border-slate-800 shadow-sm">

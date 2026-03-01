@@ -15,8 +15,13 @@ import html2canvas from "html2canvas";
 
 export default function PatientDashboard() {
   const router = useRouter();
+  
+  // STATE DINAMIS
+  const [patientId, setPatientId] = useState("");
   const [patientData, setPatientData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  
+  // STATE UI
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -29,10 +34,20 @@ export default function PatientDashboard() {
     mood_journal: ""
   });
 
-  const patientId = "pasien123"; 
-
-  // 1. FETCH DATA DARI RAILWAY
+  // 1. AMBIL ID DARI MEMORI BROWSER (LOCALSTORAGE)
   useEffect(() => {
+    const storedId = localStorage.getItem("nadi_user_id");
+    if (storedId) {
+      setPatientId(storedId);
+    } else {
+      router.push("/login"); // Tendang ke login kalau gak ada ID
+    }
+  }, [router]);
+
+  // 2. FETCH DATA DARI POSTGRESQL (VIA RAILWAY)
+  useEffect(() => {
+    if (!patientId) return; // Jangan fetch kalau ID belum dapat
+
     const fetchData = async () => {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patients/${patientId}`);
@@ -49,7 +64,7 @@ export default function PatientDashboard() {
     fetchData();
   }, [patientId]);
 
-  // 2. FUNGSI SOS (EMERGENCY)
+  // 3. FUNGSI SOS (EMERGENCY)
   const handleSOS = async () => {
     const confirmSOS = confirm("PERINGATAN: Sinyal darurat akan dikirimkan ke tenaga medis. Lanjutkan?");
     if (!confirmSOS) return;
@@ -68,7 +83,7 @@ export default function PatientDashboard() {
     }
   };
 
-  // 3. FUNGSI DOWNLOAD PDF
+  // 4. FUNGSI DOWNLOAD PDF
   const downloadPDF = async () => {
     setIsDownloading(true);
     try {
@@ -80,7 +95,7 @@ export default function PatientDashboard() {
       const pdf = new jsPDF("p", "mm", "a4");
       
       pdf.setFontSize(18);
-      pdf.setTextColor(13, 148, 136); // Warna Teal
+      pdf.setTextColor(13, 148, 136);
       pdf.text("LAPORAN KESEHATAN NADI", 10, 20);
       
       pdf.setFontSize(10);
@@ -100,7 +115,7 @@ export default function PatientDashboard() {
     }
   };
 
-  // 4. FUNGSI SIMPAN REKAM MEDIS
+  // 5. FUNGSI SIMPAN REKAM MEDIS BARU
   const handleSaveRecord = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -120,9 +135,11 @@ export default function PatientDashboard() {
       
       const result = await res.json();
       if (res.ok) {
-        alert(`Analisis AI: ${result.alert}`);
+        alert(`Analisis AI: ${result.ai_analysis || 'Berhasil disimpan'}`);
         setIsModalOpen(false);
-        window.location.reload();
+        window.location.reload(); // Reload untuk tarik data baru
+      } else {
+        alert(`Gagal menyimpan: ${result.detail || 'Error dari server'}`);
       }
     } catch (err) {
       alert("Koneksi server terputus. Coba lagi.");
@@ -131,12 +148,31 @@ export default function PatientDashboard() {
     }
   };
 
-  const chartData = [
-    { day: "Sen", value: 110 }, { day: "Sel", value: 145 },
-    { day: "Rab", value: 130 }, { day: "Kam", value: 170 },
-    { day: "Jum", value: 140 }, { day: "Sab", value: 120 },
-    { day: "Min", value: 135 },
-  ];
+  // ==========================================
+  // LOGIKA DATA DINAMIS (PENGGANTI HARDCODE)
+  // ==========================================
+  
+  // Ambil record paling terakhir dari array records (jika ada)
+  const records = patientData?.records || [];
+  const latestRecord = records.length > 0 ? records[records.length - 1] : null;
+
+  // Format data chart untuk Recharts (Ambil 7 data terakhir)
+  const formatChartData = () => {
+    if (records.length === 0) return [];
+    const days = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+    
+    // Potong maksimal 7 data terakhir
+    const recentRecords = records.slice(-7);
+    
+    return recentRecords.map((r: any) => {
+      const dateObj = new Date(r.created_at);
+      return {
+        day: days[dateObj.getDay()],
+        value: r.blood_sugar
+      };
+    });
+  };
+  const dynamicChartData = formatChartData();
 
   // ANIMATION VARIANTS
   const cardVariants = {
@@ -164,7 +200,7 @@ export default function PatientDashboard() {
             </div>
             <div>
               <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Pasien Terverifikasi</p>
-              <h1 className="text-xl font-black dark:text-white tracking-tight">{patientData?.full_name || "Memuat..."}</h1>
+              <h1 className="text-xl font-black dark:text-white tracking-tight">{patientData?.full_name || "Nama Tidak Ditemukan"}</h1>
             </div>
           </div>
           <div className="flex gap-2">
@@ -185,7 +221,7 @@ export default function PatientDashboard() {
 
       <main id="report-area" className="max-w-5xl mx-auto px-6 pt-8 space-y-6">
         
-        {/* STATS CARDS */}
+        {/* STATS CARDS DINAMIS */}
         <motion.div 
           initial="hidden" animate="show" transition={{ staggerChildren: 0.1 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-4"
@@ -193,44 +229,60 @@ export default function PatientDashboard() {
           <motion.div variants={cardVariants} whileHover={{ y: -5 }} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl">
             <div className="p-3 w-fit bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-2xl mb-4"><Droplets size={24} /></div>
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Gula Darah Terakhir</p>
-            <h2 className="text-3xl font-black dark:text-white mt-1">140 <span className="text-sm font-medium text-slate-400">mg/dL</span></h2>
+            <h2 className="text-3xl font-black dark:text-white mt-1">
+              {latestRecord ? latestRecord.blood_sugar : "--"} <span className="text-sm font-medium text-slate-400">mg/dL</span>
+            </h2>
           </motion.div>
 
           <motion.div variants={cardVariants} whileHover={{ y: -5 }} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl">
             <div className="p-3 w-fit bg-blue-50 dark:bg-blue-900/20 text-blue-500 rounded-2xl mb-4"><Activity size={24} /></div>
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Tekanan Darah</p>
-            <h2 className="text-3xl font-black dark:text-white mt-1">120/80 <span className="text-sm font-medium text-slate-400">mmHg</span></h2>
+            <h2 className="text-3xl font-black dark:text-white mt-1">
+              {latestRecord && latestRecord.systolic ? `${latestRecord.systolic}/${latestRecord.diastolic}` : "--/--"} <span className="text-sm font-medium text-slate-400">mmHg</span>
+            </h2>
           </motion.div>
 
-          <motion.div variants={cardVariants} whileHover={{ y: -5 }} className="bg-teal-600 p-6 rounded-[2rem] text-white shadow-xl shadow-teal-500/20">
-            <div className="p-3 w-fit bg-white/20 rounded-2xl mb-4"><CheckCircle2 size={24} /></div>
-            <p className="text-teal-100 text-[10px] font-black uppercase tracking-widest">Analisis Status AI</p>
-            <h2 className="text-2xl font-black mt-1 italic uppercase tracking-tighter">Kondisi Stabil</h2>
+          <motion.div variants={cardVariants} whileHover={{ y: -5 }} className={`${latestRecord && latestRecord.ai_analysis && latestRecord.ai_analysis.toLowerCase().includes("bahaya") ? "bg-rose-600 shadow-rose-500/20" : "bg-teal-600 shadow-teal-500/20"} p-6 rounded-[2rem] text-white shadow-xl`}>
+            <div className="p-3 w-fit bg-white/20 rounded-2xl mb-4">
+              {latestRecord && latestRecord.ai_analysis && latestRecord.ai_analysis.toLowerCase().includes("bahaya") ? <AlertTriangle size={24} /> : <CheckCircle2 size={24} />}
+            </div>
+            <p className="text-white/70 text-[10px] font-black uppercase tracking-widest">Analisis Status AI</p>
+            <h2 className="text-xl md:text-2xl font-black mt-1 italic uppercase tracking-tighter line-clamp-2 leading-tight">
+              {latestRecord && latestRecord.ai_analysis ? latestRecord.ai_analysis : "Belum Ada Data"}
+            </h2>
           </motion.div>
         </motion.div>
 
-        {/* CHART SECTION */}
+        {/* CHART SECTION DINAMIS */}
         <motion.section 
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
           className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl"
         >
-          <h3 className="text-lg font-black dark:text-white uppercase tracking-tight italic mb-8">Tren Kesehatan Mingguan</h3>
-          <div className="h-[250px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0d9488" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#0d9488" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 800}} dy={10} />
-                <Tooltip contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)'}} />
-                <Area type="monotone" dataKey="value" stroke="#0d9488" strokeWidth={4} fillOpacity={1} fill="url(#colorVal)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <h3 className="text-lg font-black dark:text-white uppercase tracking-tight italic mb-8">Tren Kesehatan (7 Entri Terakhir)</h3>
+          
+          {dynamicChartData.length > 0 ? (
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={dynamicChartData}>
+                  <defs>
+                    <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0d9488" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#0d9488" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 800}} dy={10} />
+                  <Tooltip contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)'}} />
+                  <Area type="monotone" dataKey="value" stroke="#0d9488" strokeWidth={4} fillOpacity={1} fill="url(#colorVal)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-[250px] w-full flex flex-col items-center justify-center text-slate-400 space-y-3">
+              <Activity size={48} className="opacity-20" />
+              <p className="text-sm font-bold uppercase tracking-widest">Belum ada riwayat terekam</p>
+            </div>
+          )}
         </motion.section>
       </main>
 
