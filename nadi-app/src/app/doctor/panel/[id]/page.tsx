@@ -11,30 +11,26 @@ import {
   MapPin, Calendar, Heart, MessageSquare, Loader2
 } from "lucide-react";
 
+// IMPORT MOCK DATA 
+import { MOCK_PATIENT_DATA } from "@/constants/mockData";
+
 export default function PatientDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const [patient, setPatient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Ambil detail pasien dari Railway Backend
+  // 1. MOCK DATA FETCHING (Pengganti Railway)
   useEffect(() => {
-    const fetchDetail = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patients/${id}`);
-        if (res.ok) {
-          const data = await res.json();
-          setPatient(data);
-        } else {
-          console.error("Data pasien tidak ditemukan");
-        }
-      } catch (err) {
-        console.error("Gagal mengambil detail pasien", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDetail();
+    // Simulasi loading jaringan selama 1 detik biar kerasa real
+    const timer = setTimeout(() => {
+      // Dalam skenario nyata, 'id' dari URL dipakai buat filter data dari database.
+      // Karena ini Mock Mode, kita langsung tembak pakai MOCK_PATIENT_DATA.
+      setPatient(MOCK_PATIENT_DATA);
+      setLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
   }, [id]);
 
   // ==========================================
@@ -121,7 +117,7 @@ export default function PatientDetailPage() {
               <div className="flex flex-wrap justify-center md:justify-start gap-4 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-widest">
                 <span className="flex items-center gap-1.5"><Calendar size={14} className="text-blue-500"/> {patient?.age ? `${patient.age} TAHUN` : "-"}</span>
                 <span className="flex items-center gap-1.5"><MapPin size={14} className="text-rose-500"/> {patient?.domicile || "-"}</span>
-                <span className="text-blue-600 italic bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-lg">ID: {patient?.patient_id || id}</span>
+                <span className="text-blue-600 italic bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-lg">ID: {patient?.id || id}</span>
               </div>
             </div>
           </motion.div>

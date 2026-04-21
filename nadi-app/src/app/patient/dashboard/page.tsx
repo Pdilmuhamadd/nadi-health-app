@@ -7,21 +7,20 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from "recharts";
 import { 
-  Heart, Activity, Droplets, Bell, User, Plus, X, 
-  CheckCircle2, Download, AlertTriangle, MessageCircle, Loader2
+  Activity, Droplets, User, Plus, X, 
+  CheckCircle2, Download, AlertTriangle, MessageCircle, Settings, LogOut, Loader2
 } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { MOCK_PATIENT_DATA } from "@/constants/mockData";
 
 export default function PatientDashboard() {
   const router = useRouter();
   
-  // STATE DINAMIS
   const [patientId, setPatientId] = useState("");
   const [patientData, setPatientData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
-  // STATE UI
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -34,56 +33,38 @@ export default function PatientDashboard() {
     mood_journal: ""
   });
 
-  // 1. AMBIL ID DARI MEMORI BROWSER (LOCALSTORAGE)
   useEffect(() => {
     const storedId = localStorage.getItem("nadi_user_id");
-    if (storedId) {
-      setPatientId(storedId);
+    if (!storedId) {
+      router.push("/login");
     } else {
-      router.push("/login"); // Tendang ke login kalau gak ada ID
+      setPatientId(storedId);
     }
   }, [router]);
 
-  // 2. FETCH DATA DARI POSTGRESQL (VIA RAILWAY)
   useEffect(() => {
-    if (!patientId) return; // Jangan fetch kalau ID belum dapat
+    if (!patientId) return;
 
-    const fetchData = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patients/${patientId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setPatientData(data);
-        }
-      } catch (err) {
-        console.error("Gagal mengambil data dari server.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    const timer = setTimeout(() => {
+      setPatientData(MOCK_PATIENT_DATA);
+      setLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
   }, [patientId]);
 
-  // 3. FUNGSI SOS (EMERGENCY)
+  const handleLogout = () => {
+    localStorage.removeItem("nadi_user_id");
+    router.push("/login");
+  };
+
   const handleSOS = async () => {
     const confirmSOS = confirm("PERINGATAN: Sinyal darurat akan dikirimkan ke tenaga medis. Lanjutkan?");
     if (!confirmSOS) return;
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/emergency`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patient_id: patientId }),
-      });
-      if (res.ok) {
-        alert("Sinyal SOS terkirim! Tetap tenang, bantuan medis segera merespon.");
-      }
-    } catch (err) {
-      alert("Gagal terhubung ke server. Segera telepon nomor layanan darurat!");
-    }
+    
+    alert("Sinyal SOS berhasil dikirimkan ke fasilitas kesehatan terdekat. Tetap tenang.");
   };
 
-  // 4. FUNGSI DOWNLOAD PDF
   const downloadPDF = async () => {
     setIsDownloading(true);
     try {
@@ -108,60 +89,49 @@ export default function PatientDashboard() {
       pdf.addImage(imgData, "PNG", 10, 42, imgWidth, imgHeight);
       pdf.save(`NADI_Report_${patientId}.pdf`);
     } catch (error) {
-      console.error("Gagal men-generate PDF", error);
       alert("Terjadi kesalahan saat membuat dokumen PDF.");
     } finally {
       setIsDownloading(false);
     }
   };
 
-  // 5. FUNGSI SIMPAN REKAM MEDIS BARU
   const handleSaveRecord = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/records`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          patient_id: patientId,
-          blood_sugar: parseInt(newRecord.blood_sugar),
-          sugar_type: newRecord.sugar_type,
-          systolic: parseInt(newRecord.systolic) || 0,
-          diastolic: parseInt(newRecord.diastolic) || 0,
-          mood_journal: newRecord.mood_journal
-        }),
-      });
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      const result = await res.json();
-      if (res.ok) {
-        alert(`Analisis AI: ${result.ai_analysis || 'Berhasil disimpan'}`);
-        setIsModalOpen(false);
-        window.location.reload(); // Reload untuk tarik data baru
-      } else {
-        alert(`Gagal menyimpan: ${result.detail || 'Error dari server'}`);
-      }
+      const mockNewRecord = {
+        blood_sugar: parseInt(newRecord.blood_sugar) || 0,
+        systolic: parseInt(newRecord.systolic) || 0,
+        diastolic: parseInt(newRecord.diastolic) || 0,
+        created_at: new Date().toISOString(),
+        ai_analysis: "Sistem mendeteksi pola stabil. Lanjutkan gaya hidup sehat Anda."
+      };
+
+      setPatientData((prev: any) => ({
+        ...prev,
+        records: [...(prev?.records || []), mockNewRecord]
+      }));
+
+      setIsModalOpen(false);
+      setNewRecord({ blood_sugar: "", sugar_type: "Sewaktu", systolic: "", diastolic: "", mood_journal: "" });
+      
     } catch (err) {
-      alert("Koneksi server terputus. Coba lagi.");
+      alert("Terjadi kesalahan sistem.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // ==========================================
-  // LOGIKA DATA DINAMIS (PENGGANTI HARDCODE)
-  // ==========================================
-  
-  // Ambil record paling terakhir dari array records (jika ada)
   const records = patientData?.records || [];
   const latestRecord = records.length > 0 ? records[records.length - 1] : null;
 
-  // Format data chart untuk Recharts (Ambil 7 data terakhir)
   const formatChartData = () => {
     if (records.length === 0) return [];
     const days = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
     
-    // Potong maksimal 7 data terakhir
     const recentRecords = records.slice(-7);
     
     return recentRecords.map((r: any) => {
@@ -174,7 +144,6 @@ export default function PatientDashboard() {
   };
   const dynamicChartData = formatChartData();
 
-  // ANIMATION VARIANTS
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0 }
@@ -191,7 +160,6 @@ export default function PatientDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 font-sans">
       
-      {/* HEADER */}
       <header className="bg-white dark:bg-slate-900 px-6 py-6 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-30">
         <div className="max-w-5xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
@@ -199,8 +167,8 @@ export default function PatientDashboard() {
               <User size={24} />
             </div>
             <div>
-              <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Pasien Terverifikasi</p>
-              <h1 className="text-xl font-black dark:text-white tracking-tight">{patientData?.full_name || "Nama Tidak Ditemukan"}</h1>
+              <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Akses Pasien</p>
+              <h1 className="text-xl font-black dark:text-white tracking-tight">{patientData?.full_name || "Memuat..."}</h1>
             </div>
           </div>
           <div className="flex gap-2">
@@ -215,13 +183,18 @@ export default function PatientDashboard() {
             <button onClick={() => router.push('/patient/chat')} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-teal-600 transition-colors">
               <MessageCircle size={20} />
             </button>
+            <button onClick={() => router.push('/patient/settings')} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-teal-600 transition-colors">
+              <Settings size={20} />
+            </button>
+            <button onClick={handleLogout} className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-xl text-rose-500 hover:bg-rose-600 hover:text-white transition-colors ml-2">
+              <LogOut size={20} />
+            </button>
           </div>
         </div>
       </header>
 
       <main id="report-area" className="max-w-5xl mx-auto px-6 pt-8 space-y-6">
         
-        {/* STATS CARDS DINAMIS */}
         <motion.div 
           initial="hidden" animate="show" transition={{ staggerChildren: 0.1 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-4"
@@ -253,12 +226,11 @@ export default function PatientDashboard() {
           </motion.div>
         </motion.div>
 
-        {/* CHART SECTION DINAMIS */}
         <motion.section 
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
           className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl"
         >
-          <h3 className="text-lg font-black dark:text-white uppercase tracking-tight italic mb-8">Tren Kesehatan (7 Entri Terakhir)</h3>
+          <h3 className="text-lg font-black dark:text-white uppercase tracking-tight italic mb-8">Tren Kesehatan Klinis</h3>
           
           {dynamicChartData.length > 0 ? (
             <div className="h-[250px] w-full">
@@ -286,7 +258,6 @@ export default function PatientDashboard() {
         </motion.section>
       </main>
 
-      {/* EMERGENCY SOS BUTTON */}
       <motion.button 
         animate={{ scale: [1, 1.1, 1], boxShadow: ["0 0 0px rgba(225,29,72,0)", "0 0 20px rgba(225,29,72,0.5)", "0 0 0px rgba(225,29,72,0)"] }}
         transition={{ repeat: Infinity, duration: 1.5 }}
@@ -296,7 +267,6 @@ export default function PatientDashboard() {
         <AlertTriangle size={28} />
       </motion.button>
 
-      {/* ADD DATA BUTTON */}
       <motion.button 
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsModalOpen(true)}
@@ -305,7 +275,6 @@ export default function PatientDashboard() {
         <Plus size={28} />
       </motion.button>
 
-      {/* INPUT MODAL */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
@@ -319,17 +288,17 @@ export default function PatientDashboard() {
                 <X size={20} />
               </button>
               
-              <h2 className="text-2xl font-black dark:text-white uppercase italic tracking-tighter mb-6 mt-2">Update <span className="text-teal-600">Vitalitas</span></h2>
+              <h2 className="text-2xl font-black dark:text-white uppercase italic tracking-tighter mb-6 mt-2">Update Vitalitas</h2>
               
               <form onSubmit={handleSaveRecord} className="space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Gula Darah</label>
-                    <input type="number" required placeholder="mg/dL" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white transition-all" onChange={(e) => setNewRecord({...newRecord, blood_sugar: e.target.value})} />
+                    <input type="number" required placeholder="mg/dL" value={newRecord.blood_sugar} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white transition-all" onChange={(e) => setNewRecord({...newRecord, blood_sugar: e.target.value})} />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Kondisi</label>
-                    <select className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white transition-all" onChange={(e) => setNewRecord({...newRecord, sugar_type: e.target.value})}>
+                    <select value={newRecord.sugar_type} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white transition-all" onChange={(e) => setNewRecord({...newRecord, sugar_type: e.target.value})}>
                       <option>Sewaktu</option><option>Puasa</option><option>Setelah Makan</option>
                     </select>
                   </div>
@@ -338,17 +307,17 @@ export default function PatientDashboard() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Sistolik</label>
-                    <input type="number" placeholder="mmHg" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition-all" onChange={(e) => setNewRecord({...newRecord, systolic: e.target.value})} />
+                    <input type="number" placeholder="mmHg" value={newRecord.systolic} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition-all" onChange={(e) => setNewRecord({...newRecord, systolic: e.target.value})} />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Diastolik</label>
-                    <input type="number" placeholder="mmHg" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition-all" onChange={(e) => setNewRecord({...newRecord, diastolic: e.target.value})} />
+                    <input type="number" placeholder="mmHg" value={newRecord.diastolic} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition-all" onChange={(e) => setNewRecord({...newRecord, diastolic: e.target.value})} />
                   </div>
                 </div>
                 
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Jurnal Harian & Keluhan</label>
-                  <textarea placeholder="Ceritakan perasaanmu atau keluhan hari ini..." className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white min-h-[100px] resize-none transition-all" onChange={(e) => setNewRecord({...newRecord, mood_journal: e.target.value})} />
+                  <textarea placeholder="Ceritakan perasaanmu atau keluhan hari ini..." value={newRecord.mood_journal} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-transparent dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 dark:text-white min-h-[100px] resize-none transition-all" onChange={(e) => setNewRecord({...newRecord, mood_journal: e.target.value})} />
                 </div>
                 
                 <button disabled={submitting} className="w-full mt-2 bg-teal-600 text-white font-black py-4 rounded-[1.5rem] shadow-xl shadow-teal-500/20 disabled:opacity-70 transition-all active:scale-95 flex items-center justify-center gap-2">

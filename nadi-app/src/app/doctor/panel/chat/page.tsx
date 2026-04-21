@@ -5,6 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Send, Search, User, ArrowLeft, CheckCheck, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+// IMPORT MOCK DATA
+import { MOCK_PATIENT_DATA, MOCK_CHAT_HISTORY } from "@/constants/mockData";
+
 // Interface untuk konsistensi data
 interface ChatMessage {
   id?: number;
@@ -26,61 +29,55 @@ export default function DoctorChatPage() {
   // Ref untuk auto-scroll
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  const doctorId = "nama_dokter"; 
+  // Harus sama dengan sender_id dokter di MOCK_CHAT_HISTORY
+  const doctorId = "dr_ahmad"; 
 
   // Fungsi Auto Scroll
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // 1. Ambil daftar pasien untuk sidebar
+  // 1. Ambil daftar pasien untuk sidebar (MOCK VERSION)
   useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patients`);
-        if (res.ok) {
-          const data = await res.json();
-          setPatients(data);
-          // Set pasien pertama jika belum ada yang dipilih dan data tersedia
-          if (data.length > 0 && !selectedPatient) {
-            setSelectedPatient(data[0]);
-          }
+    const fetchPatients = () => {
+      // Kita buat array dummy untuk meramaikan sidebar
+      const mockPatientsList = [
+        { ...MOCK_PATIENT_DATA, patient_id: MOCK_PATIENT_DATA.id, is_emergency: 0 },
+        { patient_id: "pasien456", full_name: "Siti Aminah", age: 34, is_emergency: 1 },
+        { patient_id: "pasien789", full_name: "Andi Saputra", age: 28, is_emergency: 0 },
+      ];
+
+      setTimeout(() => {
+        setPatients(mockPatientsList);
+        if (!selectedPatient) {
+          setSelectedPatient(mockPatientsList[0]);
         }
-      } catch (err) {
-        console.error("Gagal mengambil daftar pasien");
-      }
+      }, 500); // Simulasi loading cepat
     };
     fetchPatients();
   }, []);
 
   // 2. Ambil riwayat chat dengan pasien yang dipilih
-  const fetchChat = async (showLoading = false) => {
+  const fetchChat = (showLoading = false) => {
     if (!selectedPatient) return;
     
     if (showLoading) setIsLoadingChat(true);
     
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat/${doctorId}`);
-      if (res.ok) {
-        const data = await res.json();
-        // Filter pesan hanya untuk pasien yang sedang dipilih
-        const filteredChat = data.filter((c: any) => 
-          c.sender_id === selectedPatient.patient_id || c.receiver_id === selectedPatient.patient_id
-        );
-        setChatHistory(filteredChat);
+    setTimeout(() => {
+      // Kalau yang diklik adalah pasien utama kita (Budi), keluarin history chatnya
+      if (selectedPatient.patient_id === MOCK_PATIENT_DATA.id) {
+        setChatHistory(MOCK_CHAT_HISTORY);
+      } else {
+        // Kalau pasien lain, chatnya kosong
+        setChatHistory([]);
       }
-    } catch (err) {
-      console.error("Gagal memuat pesan", err);
-    } finally {
       setIsLoadingChat(false);
-    }
+    }, 800);
   };
 
-  // Effect untuk polling & ganti pasien
+  // Effect untuk ganti pasien (tanpa polling interval biar pesan baru ga kerefresh hilang)
   useEffect(() => {
-    fetchChat(true); // Tampilkan loading saat ganti pasien
-    const interval = setInterval(() => fetchChat(false), 4000); 
-    return () => clearInterval(interval);
+    fetchChat(true);
   }, [selectedPatient]);
 
   // Effect untuk auto-scroll tiap riwayat chat berubah
@@ -89,30 +86,26 @@ export default function DoctorChatPage() {
   }, [chatHistory]);
 
   // 3. Fungsi Kirim Pesan
-  const handleSend = async () => {
+  const handleSend = () => {
     if (!msg.trim() || !selectedPatient || isSending) return;
     
     setIsSending(true);
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sender_id: doctorId,
-          receiver_id: selectedPatient.patient_id,
-          message: msg.trim()
-        }),
-      });
+    
+    // Simulasi delay jaringan ngirim pesan
+    setTimeout(() => {
+      const newMsg: ChatMessage = {
+        id: Date.now(),
+        sender_id: doctorId,
+        receiver_id: selectedPatient.patient_id,
+        message: msg.trim(),
+        created_at: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+      };
       
-      if (res.ok) {
-        setMsg("");
-        await fetchChat(); // Segera perbarui setelah kirim
-      }
-    } catch (err) {
-      alert("Gagal mengirim pesan.");
-    } finally {
+      // Langsung dorong pesan baru ke layar (Optimistic Update)
+      setChatHistory((prev) => [...prev, newMsg]);
+      setMsg("");
       setIsSending(false);
-    }
+    }, 1000);
   };
 
   return (
@@ -218,11 +211,10 @@ export default function DoctorChatPage() {
                         >
                           <div className={`max-w-[85%] md:max-w-[70%] p-4 rounded-3xl text-sm font-medium shadow-sm leading-relaxed ${isMe ? "bg-blue-600 text-white rounded-br-none shadow-blue-500/20" : "bg-white dark:bg-slate-800 dark:text-white rounded-bl-none border border-slate-100 dark:border-slate-700"}`}>
                             {c.message}
-                            {isMe && (
-                              <div className="flex justify-end mt-1 opacity-60">
-                                <CheckCheck size={14}/>
-                              </div>
-                            )}
+                            <div className={`text-[9px] mt-2 flex items-center gap-1 ${isMe ? "text-blue-200 justify-end" : "text-slate-400 justify-start"}`}>
+                              {c.created_at || "Baru saja"}
+                              {isMe && <CheckCheck size={12}/>}
+                            </div>
                           </div>
                         </motion.div>
                       );

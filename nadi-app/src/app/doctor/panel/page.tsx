@@ -8,35 +8,37 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+// IMPORT MOCK DATA
+import { MOCK_PATIENT_DATA } from "@/constants/mockData";
+
 export default function DoctorPanelPage() {
   const router = useRouter();
   const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // 1. AMBIL DAFTAR SEMUA PASIEN DARI RAILWAY
-  const fetchPatients = async () => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patients`);
-      if (res.ok) {
-        const data = await res.json();
-        setPatients(data);
-      }
-    } catch (err) {
-      console.error("Gagal terhubung ke server Railway");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // 1. AMBIL DAFTAR SEMUA PASIEN (MOCK VERSION)
   useEffect(() => {
+    const fetchPatients = () => {
+      // Kita buat array dummy gabungan dari mock data utama dan data tambahan
+      const mockPatientsList = [
+        { ...MOCK_PATIENT_DATA, patient_id: MOCK_PATIENT_DATA.id, is_emergency: 0 },
+        { patient_id: "pasien456", full_name: "Siti Aminah", age: 34, domicile: "Bandung", is_emergency: 1 },
+        { patient_id: "pasien789", full_name: "Andi Saputra", age: 28, domicile: "Surabaya", is_emergency: 0 },
+        { patient_id: "pasien101", full_name: "Ratna Sari", age: 52, domicile: "Semarang", is_emergency: 0 },
+      ];
+
+      // Simulasi loading jaringan 1.5 detik
+      setTimeout(() => {
+        setPatients(mockPatientsList);
+        setLoading(false);
+      }, 1500); 
+    };
+
     fetchPatients();
-    // Polling setiap 10 detik untuk mendeteksi sinyal SOS masuk
-    const interval = setInterval(fetchPatients, 10000);
-    return () => clearInterval(interval);
   }, []);
 
-  // Filter pencarian pasien
+  // Filter pencarian pasien (Real-time di Frontend)
   const filteredPatients = patients.filter(p => 
     p.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.patient_id.toLowerCase().includes(searchTerm.toLowerCase())
@@ -78,10 +80,6 @@ export default function DoctorPanelPage() {
             </div>
             <div>
               <h1 className="text-2xl font-black dark:text-white tracking-tighter italic uppercase">Panel <span className="text-blue-600">Dokter</span></h1>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Monitoring Real-time Aktif</p>
-              </div>
             </div>
           </div>
           
@@ -144,7 +142,7 @@ export default function DoctorPanelPage() {
                     >
                       {filteredPatients.map((patient) => (
                         <motion.div 
-                          key={patient.id}
+                          key={patient.patient_id}
                           variants={itemVariants}
                           whileHover={{ backgroundColor: patient.is_emergency === 1 ? "rgba(225, 29, 72, 0.05)" : "rgba(37, 99, 235, 0.03)", x: 4 }}
                           className={`p-5 md:p-6 flex items-center justify-between cursor-pointer transition-all relative group ${patient.is_emergency === 1 ? "bg-rose-50/30 dark:bg-rose-900/10" : ""}`}
@@ -188,7 +186,7 @@ export default function DoctorPanelPage() {
                             )}
                             <div className="text-right hidden sm:block">
                               <p className="text-[10px] font-black text-slate-300 uppercase">Domisili</p>
-                              <p className="text-xs font-bold dark:text-slate-400 italic max-w-[120px] truncate">{patient.domicile}</p>
+                              <p className="text-xs font-bold dark:text-slate-400 italic max-w-[120px] truncate">{patient.domicile || "-"}</p>
                             </div>
                             <div className="w-10 h-10 md:w-12 md:h-12 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-300 group-hover:text-blue-600 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-all border border-transparent group-hover:border-blue-200 dark:group-hover:border-blue-800">
                               <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />

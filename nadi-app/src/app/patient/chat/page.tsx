@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, ArrowLeft, Loader2, User } from "lucide-react";
+import { Send, ArrowLeft, Loader2, User, CheckCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { MOCK_CHAT_HISTORY } from "@/constants/mockData";
 
 // Tipe data untuk pesan agar lebih rapi
 interface ChatMessage {
@@ -19,7 +20,7 @@ export default function PatientChatPage() {
   
   // STATE DINAMIS
   const [patientId, setPatientId] = useState("");
-  const doctorId = "dr_ahmad"; // Target dokter default (sesuaikan dengan ID dokter di DB)
+  const doctorId = "dr_ahmad";
 
   // STATE UI & DATA
   const [msg, setMsg] = useState("");
@@ -37,37 +38,25 @@ export default function PatientChatPage() {
 
   // 1. AMBIL ID DARI MEMORI BROWSER (LOCALSTORAGE)
   useEffect(() => {
-    const storedId = localStorage.getItem("nadi_user_id");
-    if (storedId) {
-      setPatientId(storedId);
-    } else {
-      router.push("/login"); // Tendang ke login kalau gak ada ID
-    }
-  }, [router]);
+    const storedId = localStorage.getItem("nadi_user_id") || "pasien123";
+    setPatientId(storedId);
+  }, []);
 
-  // 2. FETCH CHAT & POLLING REAL-TIME
+  // 2. FETCH CHAT
   useEffect(() => {
-    if (!patientId) return; // Tunggu sampai ID ditarik dari localStorage
+    if (!patientId) return;
 
-    const fetchChat = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat/${patientId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setChatHistory(data);
-        }
-      } catch (err) {
-        console.error("Gagal mengambil riwayat pesan", err);
-      } finally {
+    const fetchChat = () => {
+      setIsLoading(true);
+      // Simulasi loading jaringan selama 800ms
+      setTimeout(() => {
+        setChatHistory(MOCK_CHAT_HISTORY);
         setIsLoading(false);
-      }
+      }, 800);
     };
 
-    fetchChat(); // Tarik data pertama kali
+    fetchChat(); 
     
-    // Polling data setiap 5 detik biar berasa real-time
-    const interval = setInterval(fetchChat, 5000); 
-    return () => clearInterval(interval);
   }, [patientId]);
 
   // Trigger auto-scroll setiap kali riwayat chat berubah
@@ -75,38 +64,27 @@ export default function PatientChatPage() {
     scrollToBottom();
   }, [chatHistory]);
 
-  // 3. FUNGSI KIRIM PESAN
-  const handleSend = async () => {
+  // 3. FUNGSI KIRIM PESAN 
+  const handleSend = () => {
     if (!msg.trim() || isSending || !patientId) return; 
     
     setIsSending(true);
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sender_id: patientId,
-          receiver_id: doctorId,
-          message: msg.trim()
-        }),
-      });
-      
-      if (res.ok) {
-        setMsg("");
-        // Optimistic Update: Langsung tambahkan ke UI tanpa nunggu polling 5 detik
-        setChatHistory(prev => [...prev, { 
-          sender_id: patientId, 
-          receiver_id: doctorId, 
-          message: msg.trim() 
-        }]);
-      } else {
-        alert("Gagal mengirim pesan ke server.");
-      }
-    } catch (err) {
-      alert("Pesan gagal terkirim. Periksa koneksi Anda.");
-    } finally {
+    
+    // Simulasi delay ngirim pesan ke server selama 1 detik
+    setTimeout(() => {
+      const newMsg: ChatMessage = {
+        id: Date.now(),
+        sender_id: patientId,
+        receiver_id: doctorId,
+        message: msg.trim(),
+        created_at: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+      };
+
+      setMsg("");
+      // Optimistic Update: Langsung tambahkan ke UI
+      setChatHistory(prev => [...prev, newMsg]);
       setIsSending(false);
-    }
+    }, 1000);
   };
 
   return (
@@ -164,6 +142,10 @@ export default function PatientChatPage() {
                         }`}
                       >
                         {c.message}
+                        <div className={`text-[9px] mt-2 flex items-center gap-1 ${isMe ? "text-teal-200 justify-end" : "text-slate-400 justify-start"}`}>
+                          {c.created_at || "Baru saja"}
+                          {isMe && <CheckCheck size={12}/>}
+                        </div>
                       </div>
                     </motion.div>
                   );

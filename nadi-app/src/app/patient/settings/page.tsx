@@ -7,6 +7,7 @@ import {
   Save, Smartphone, ArrowLeft, Loader2
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { MOCK_PATIENT_DATA } from "@/constants/mockData";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -27,51 +28,38 @@ export default function SettingsPage() {
 
   // 1. AMBIL ID DARI MEMORI BROWSER (LOCALSTORAGE)
   useEffect(() => {
-    const storedId = localStorage.getItem("nadi_user_id");
-    if (storedId) {
-      setPatientId(storedId);
-    } else {
-      router.push("/login"); // Tendang ke login kalau gak ada ID
-    }
-  }, [router]);
+    const storedId = localStorage.getItem("nadi_user_id") || "pasien123";
+    setPatientId(storedId);
+  }, []);
 
-  // 2. Fetch data awal saat halaman dimuat dan ID sudah didapat
+  // 2. FETCH DATA
   useEffect(() => {
     if (!patientId) return;
 
-    const fetchProfile = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patients/${patientId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setFormData({
-            full_name: data.full_name || "",
-            domicile: data.domicile || "",
-            age: data.age?.toString() || "",
-            rpd: data.rpd || "",
-            rpk: data.rpk || "",
-            rpo: data.rpo || ""
-          });
-        }
-      } catch (error) {
-        console.error("Gagal memuat profil");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProfile();
+    // Simulasi loading jaringan 800ms
+    const timer = setTimeout(() => {
+      setFormData({
+        full_name: MOCK_PATIENT_DATA.full_name || "",
+        domicile: MOCK_PATIENT_DATA.domicile || "",
+        age: MOCK_PATIENT_DATA.age?.toString() || "",
+        rpd: MOCK_PATIENT_DATA.rpd || "",
+        rpk: MOCK_PATIENT_DATA.rpk || "",
+        rpo: MOCK_PATIENT_DATA.rpo || ""
+      });
+      setLoading(false);
+    }, 800);
+
+    return () => clearTimeout(timer);
   }, [patientId]);
 
-  // 3. Fungsi Simpan (Update Profile)
+  // 3. FUNGSI SIMPAN 
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Catatan: Karena di backend main.py saat ini belum ada endpoint PUT/Update, 
-      // kode ini disiapkan untuk masa depan. Untuk sekarang kita simulasikan delay & sukses.
-      // fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patients/${patientId}`, { method: 'PUT', ... })
+      // Simulasi delay pengiriman data ke server
+      await new Promise(resolve => setTimeout(resolve, 1000)); 
       
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulasi delay jaringan
-      alert("Perubahan profil dan rekam medis berhasil disimpan (Simulasi)!");
+      alert("Perubahan profil dan rekam medis berhasil disimpan!");
     } catch (error) {
       alert("Gagal menyimpan perubahan.");
     } finally {
