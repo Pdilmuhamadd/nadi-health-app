@@ -2,38 +2,16 @@
 
 import React from "react";
 import Link from "next/link";
-// 1. KITA IMPORT 'Variants' DARI FRAMER MOTION
-import { motion, Variants } from "framer-motion";
+import { motion } from "framer-motion";
 import { 
-  HeartPulse, 
-  Activity, 
-  ShieldCheck, 
-  ArrowRight, 
-  Phone,
-  Clock,
-  UserPlus,
-  Stethoscope,
-  FileText,
-  Lock
+  HeartPulse, Activity, ShieldCheck, ArrowRight, 
+  Phone, Clock, UserPlus, Stethoscope, FileText, Lock
 } from "lucide-react";
 
 export default function LandingPage() {
-  // 2. KITA TAMBAHIN ': Variants' DI SINI BIAR TYPESCRIPT NGGAK NGAMUK
-  const fadeUp: Variants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
-  };
-
-  // 3. KITA TAMBAHIN JUGA DI SINI
-  const stagger: Variants = {
-    hidden: { opacity: 0 },
-    show: { transition: { staggerChildren: 0.1 } }
-  };
-
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans selection:bg-blue-500 selection:text-white">
       
-      {/* EMERGENCY BAR */}
       <div className="bg-rose-600 text-white px-6 py-2 md:py-2.5">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center text-[10px] md:text-xs font-bold tracking-widest uppercase gap-2">
           <div className="flex items-center gap-3">
@@ -46,7 +24,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* CLINICAL NAVBAR */}
       <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -73,33 +50,46 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* CLEAN HERO SECTION */}
       <main className="max-w-7xl mx-auto px-6 pt-12 pb-20 md:pt-20 md:pb-28 relative">
-        
-        {/* Subtle Background Pattern */}
         <div className="absolute inset-0 z-0 opacity-[0.03] dark:opacity-[0.05]" style={{ backgroundImage: "radial-gradient(#2563eb 1px, transparent 1px)", backgroundSize: "32px 32px" }}></div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center relative z-10">
           
-          {/* KIRI: Copywriting Berpusat pada Pasien */}
-          <motion.div 
-            variants={stagger} initial="hidden" animate="show"
-            className="lg:col-span-7 space-y-6 md:space-y-8"
-          >
-            <motion.div variants={fadeUp} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-bold uppercase tracking-widest border border-slate-200 dark:border-slate-700">
+          <div className="lg:col-span-7 space-y-6 md:space-y-8">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              transition={{ duration: 0.5 }} 
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-bold uppercase tracking-widest border border-slate-200 dark:border-slate-700"
+            >
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
               Platform Rekam Medis Digital
             </motion.div>
             
-            <motion.h1 variants={fadeUp} className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.15] text-slate-900 dark:text-white">
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              transition={{ duration: 0.5, delay: 0.1 }} 
+              className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.15] text-slate-900 dark:text-white"
+            >
               Layanan Kesehatan yang <span className="text-blue-600">Memahami Anda.</span>
             </motion.h1>
             
-            <motion.p variants={fadeUp} className="text-base md:text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl font-medium">
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              transition={{ duration: 0.5, delay: 0.2 }} 
+              className="text-base md:text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl font-medium"
+            >
               NADI menghadirkan ekosistem kesehatan transparan tanpa antrean fisik. Akses rekam medis, konsultasi dokter, dan pantauan vitalitas real-time hanya dengan NIK KTP Anda.
             </motion.p>
             
-            <motion.div variants={fadeUp} className="pt-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              transition={{ duration: 0.5, delay: 0.3 }} 
+              className="pt-4 flex flex-col sm:flex-row items-start sm:items-center gap-4"
+            >
               <Link href="/register" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95">
                 <UserPlus size={20} />
                 Daftar Akun Baru
@@ -109,74 +99,43 @@ export default function LandingPage() {
                 Masuk Portal NADI
               </Link>
             </motion.div>
-          </motion.div>
+          </div>
 
-          {/* KANAN: Value Proposition Grid */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, delay: 0.2 }}
+            initial={{ opacity: 0, scale: 0.95 }} 
+            animate={{ opacity: 1, scale: 1 }} 
+            transition={{ duration: 0.7, delay: 0.2 }} 
             className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4"
           >
-            {/* Value 1 */}
             <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none hover:-translate-y-1 transition-transform">
-              <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-blue-600 mb-4">
-                <FileText size={24} />
-              </div>
+              <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-blue-600 mb-4"><FileText size={24} /></div>
               <h3 className="font-bold text-slate-900 dark:text-white mb-2">Zero-Tech Patient</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Pasien tidak perlu mengunduh aplikasi. Semua data terintegrasi langsung via NIK di fasilitas kesehatan.</p>
             </div>
-
-            {/* Value 2 */}
             <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none hover:-translate-y-1 transition-transform sm:mt-8">
-              <div className="w-12 h-12 bg-teal-50 dark:bg-teal-900/20 rounded-xl flex items-center justify-center text-teal-600 mb-4">
-                <Activity size={24} />
-              </div>
+              <div className="w-12 h-12 bg-teal-50 dark:bg-teal-900/20 rounded-xl flex items-center justify-center text-teal-600 mb-4"><Activity size={24} /></div>
               <h3 className="font-bold text-slate-900 dark:text-white mb-2">Analisis AI Real-time</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Sistem mendeteksi anomali pada gula darah & tensi secara otomatis untuk peringatan dini.</p>
             </div>
-
-            {/* Value 3 */}
             <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none hover:-translate-y-1 transition-transform sm:-mt-8">
-              <div className="w-12 h-12 bg-rose-50 dark:bg-rose-900/20 rounded-xl flex items-center justify-center text-rose-600 mb-4">
-                <HeartPulse size={24} />
-              </div>
+              <div className="w-12 h-12 bg-rose-50 dark:bg-rose-900/20 rounded-xl flex items-center justify-center text-rose-600 mb-4"><HeartPulse size={24} /></div>
               <h3 className="font-bold text-slate-900 dark:text-white mb-2">Antrean Transparan</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Menghapus silo data. Jadwal dokter dan sisa antrean disinkronkan secara presisi dan terbuka.</p>
             </div>
-
-            {/* Value 4 */}
             <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none hover:-translate-y-1 transition-transform">
-              <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 mb-4">
-                <Lock size={24} />
-              </div>
+              <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 mb-4"><Lock size={24} /></div>
               <h3 className="font-bold text-slate-900 dark:text-white mb-2">Privasi Terjamin</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Rekam medis (RPD, RPK, RPO) dikunci dengan enkripsi berstandar industri medis modern.</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Rekam medis dikunci dengan enkripsi berstandar industri medis modern.</p>
             </div>
           </motion.div>
-
         </div>
       </main>
 
-      {/* TRUST BADGES SECTION */}
-      <section className="border-y border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-8">
-        <div className="max-w-7xl mx-auto px-6 flex flex-wrap justify-center md:justify-between items-center gap-8 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-          <div className="text-xl font-black tracking-tighter text-slate-400">KEMENKES RI</div>
-          <div className="text-xl font-black tracking-tighter text-slate-400">BPJS KESEHATAN</div>
-          <div className="text-xl font-black tracking-tighter text-slate-400">SATUSEHAT</div>
-          <div className="text-xl font-black tracking-tighter text-slate-400">I K I</div>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="bg-white dark:bg-slate-950 py-8">
+      <footer className="bg-white dark:bg-slate-950 py-8 border-t border-slate-200 dark:border-slate-800 mt-12">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
             &copy; 2026 NADI Health System. Seluruh hak cipta dilindungi.
           </p>
-          <div className="flex gap-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-            <Link href="#" className="hover:text-blue-600 transition-colors">Bantuan</Link>
-            <Link href="#" className="hover:text-blue-600 transition-colors">Privasi</Link>
-            <Link href="#" className="hover:text-blue-600 transition-colors">Syarat & Ketentuan</Link>
-          </div>
         </div>
       </footer>
     </div>
